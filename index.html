@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AusBuild Pro V4 — Free Sydney Residential Quote Calculator</title>
+<meta name="description" content="Free residential building cost estimator for Sydney & Adelaide. Calibrated with 170+ AArch data points. Q1-Q9 quality levels, slope, market conditions, pool, PDF export.">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; color: #1a1a2e; background: #fff; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5e 50%, #2e4b93 100%);
+    color: white; padding: 60px 20px 80px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 60px;
+    background: white; clip-path: ellipse(55% 100% at 50% 100%);
+  }
+  .hero h1 { font-size: 2.8rem; font-weight: 900; margin-bottom: 12px; letter-spacing: -1px; }
+  .hero h1 span { color: #60a5fa; }
+  .hero .badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 16px; font-size: 0.8rem; margin-bottom: 20px; backdrop-filter: blur(4px); }
+  .hero p { font-size: 1.15rem; max-width: 650px; margin: 0 auto 30px; opacity: 0.9; line-height: 1.6; }
+  .hero .cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px;
+    border-radius: 10px; font-size: 1rem; font-weight: 700; text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; border: none;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+  .btn-primary { background: #2563eb; color: white; }
+  .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  .btn-green { background: #16a34a; color: white; }
+
+  /* Stats */
+  .stats {
+    display: flex; justify-content: center; gap: 40px; padding: 40px 20px;
+    flex-wrap: wrap; background: #f8fafc;
+  }
+  .stat { text-align: center; }
+  .stat .num { font-size: 2.2rem; font-weight: 900; color: #0d1b3e; }
+  .stat .label { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+
+  /* Sections */
+  .section { padding: 60px 20px; max-width: 960px; margin: 0 auto; }
+  .section h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: #0d1b3e; }
+  .section .subtitle { color: #64748b; margin-bottom: 32px; font-size: 1rem; }
+
+  /* Features Grid */
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .feature-card {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .feature-card:hover { border-color: #2563eb; box-shadow: 0 4px 15px rgba(37,99,235,0.1); }
+  .feature-card .icon { font-size: 1.8rem; margin-bottom: 12px; }
+  .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+  .feature-card p { font-size: 0.9rem; color: #64748b; line-height: 1.5; }
+
+  /* How It Works */
+  .steps { display: flex; gap: 24px; flex-wrap: wrap; }
+  .step {
+    flex: 1; min-width: 200px; text-align: center; padding: 24px;
+    background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; position: relative;
+  }
+  .step .num {
+    width: 36px; height: 36px; border-radius: 50%; background: #0d1b3e; color: white;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 800; margin-bottom: 12px;
+  }
+  .step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+  .step p { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+
+  /* Pricing */
+  .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .price-card {
+    border: 2px solid #e2e8f0; border-radius: 16px; padding: 32px 24px; text-align: center;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .price-card.featured { border-color: #2563eb; background: linear-gradient(135deg, #eff6ff, #f8fafc); transform: scale(1.03); }
+  .price-card .tier { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
+  .price-card .price { font-size: 2.5rem; font-weight: 900; margin: 12px 0 4px; color: #0d1b3e; }
+  .price-card .price span { font-size: 1rem; font-weight: 400; color: #94a3b8; }
+  .price-card .desc { font-size: 0.9rem; color: #64748b; margin-bottom: 20px; }
+  .price-card ul { text-align: left; list-style: none; margin-bottom: 24px; }
+  .price-card ul li { padding: 6px 0; font-size: 0.9rem; color: #475569; }
+  .price-card ul li::before { content: '✓ '; color: #16a34a; font-weight: 700; }
+
+  /* Screenshot */
+  .screenshot-section { background: #f1f5f9; padding: 60px 20px; text-align: center; }
+  .screenshot-section h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 24px; color: #0d1b3e; }
+  .screenshot-frame {
+    max-width: 900px; margin: 0 auto; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 3px solid #0d1b3e;
+    background: #1a1a2e; padding: 8px 8px 0;
+  }
+  .screenshot-frame .topbar {
+    display: flex; gap: 6px; padding: 6px 8px; margin-bottom: 6px;
+  }
+  .screenshot-frame .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .screenshot-frame .dot.r { background: #ff5f56; }
+  .screenshot-frame .dot.y { background: #ffbd2e; }
+  .screenshot-frame .dot.g { background: #27c93f; }
+  .screenshot-frame img, .screenshot-frame .placeholder {
+    width: 100%; border-radius: 0 0 6px 6px; display: block;
+  }
+  .screenshot-frame .placeholder {
+    background: linear-gradient(135deg, #0d1b3e, #1a2d5e);
+    color: white; padding: 80px 40px; font-size: 1.2rem; font-weight: 700;
+  }
+  .screenshot-frame .placeholder .features-list {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; text-align: left; font-size: 0.9rem; font-weight: 400; opacity: 0.8;
+  }
+
+  /* Data Source */
+  .data-source { background: #0d1b3e; color: white; padding: 60px 20px; text-align: center; }
+  .data-source h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 12px; }
+  .data-source p { max-width: 650px; margin: 0 auto 24px; opacity: 0.8; line-height: 1.6; }
+  .data-badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .data-badge {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 12px 20px; font-size: 0.85rem; font-weight: 600;
+  }
+
+  /* FAQ */
+  .faq-item { border-bottom: 1px solid #e2e8f0; padding: 20px 0; }
+  .faq-item h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: #0d1b3e; cursor: pointer; }
+  .faq-item p { font-size: 0.9rem; color: #64748b; line-height: 1.6; }
+
+  /* Footer */
+  footer { background: #0d1b3e; color: white; padding: 40px 20px; text-align: center; }
+  footer .brand { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+  footer .brand span { color: #60a5fa; }
+  footer p { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; line-height: 1.6; }
+  footer a { color: #60a5fa; text-decoration: none; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.8rem; }
+    .hero p { font-size: 1rem; }
+    .stats { gap: 24px; }
+    .stat .num { font-size: 1.6rem; }
+    .steps { flex-direction: column; }
+    .screenshot-frame .placeholder .features-list { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">Free Tool — No Sign-up Required</div>
+  <h1>Aus<span>Build</span> Pro V4</h1>
+  <p>Free residential building cost estimator for <strong>Sydney &amp; Adelaide</strong>. Calibrated with 170+ real AArch data points. Get accurate ballpark quotes in 30 seconds.</p>
+  <div class="cta-group">
+    <a href="https://drive.google.com/YOUR_LINK_HERE" class="btn btn-primary" target="_blank">Download Free HTML Tool</a>
+    <a href="#pricing" class="btn btn-secondary">View Pro Plans</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="num">170+</div>
+    <div class="label">AArch Data Points</div>
+  </div>
+  <div class="stat">
+    <div class="num">Q1–Q9</div>
+    <div class="label">Quality Levels</div>
+  </div>
+  <div class="stat">
+    <div class="num">30s</div>
+    <div class="label">Quote Generation</div>
+  </div>
+  <div class="stat">
+    <div class="num">$0</div>
+    <div class="label">Free to Use</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section">
+  <h2>Built for Sydney &amp; Adelaide Builders</h2>
+  <p class="subtitle">Everything a small residential builder needs for fast, reliable ballpark quotes.</p>
+  <div class="features">
+    <div class="feature-card">
+      <div class="icon">📊</div>
+      <h3>170+ AArch Calibrated</h3>
+      <p>Algorithm calibrated against 170 real scenarios from AAArchitect.com.au — the gold standard for Australian residential costing.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🏗️</div>
+      <h3>Q1–Q9 Quality Scale</h3>
+      <p>From basic project homes (Q1) to luxury architectural builds (Q9). Accurate piecewise size factors for every quality level.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">⛰️</div>
+      <h3>Slope &amp; Site Conditions</h3>
+      <p>Flat, medium slope (10–25°), or steep (>25°). Site access factors automatically adjust your quote high-end.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📈</div>
+      <h3>Market Conditions</h3>
+      <p>Normal, Boom (+6.2%), or Recession market adjustments based on real Sydney market data analysis.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🏊</div>
+      <h3>Pool, External &amp; Driveway</h3>
+      <p>Quality-dependent pool rates, external area costing, and driveway calculations — all included.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📄</div>
+      <h3>PDF Export</h3>
+      <p>Generate professional PDF quotes with itemised breakdown. Ready to share with clients or stakeholders.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SCREENSHOT / PREVIEW -->
+<div class="screenshot-section">
+  <h2>See It In Action</h2>
+  <div class="screenshot-frame">
+    <div class="topbar">
+      <div class="dot r"></div>
+      <div class="dot y"></div>
+      <div class="dot g"></div>
+    </div>
+    <div class="placeholder">
+      AusBuild Pro V4 — Quote Calculator Interface
+      <div class="features-list">
+        <div>Build Type: New Build / A&amp;A / Reno</div>
+        <div>Quality: Q1–Q9 Scale</div>
+        <div>Internal Area: m² input</div>
+        <div>Site: Flat / Slope / Steep</div>
+        <div>Market: Normal / Boom / Recession</div>
+        <div>Builder Margin: Adjustable %</div>
+        <div>Pool &amp; External Areas</div>
+        <div>PDF Export with Breakdown</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section">
+  <h2>How It Works</h2>
+  <p class="subtitle">Three simple steps. No account needed.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <h3>Download</h3>
+      <p>Get the free HTML file from Google Drive. No installation needed — runs in any browser.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <h3>Enter Parameters</h3>
+      <p>Set build type, quality level, area, site conditions, and market — takes 30 seconds.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <h3>Get Your Quote</h3>
+      <p>Instant low–high cost range with itemised breakdown. Export PDF for your clients.</p>
+    </div>
+  </div>
+</div>
+
+<!-- DATA SOURCE -->
+<div class="data-source">
+  <h2>Trusted Data Source</h2>
+  <p>Our algorithm is calibrated using 170+ real scenarios from AAArchitect.com.au — Australia's most respected residential building cost calculator. Every quality level, slope condition, and market scenario has been verified against real data.</p>
+  <div class="data-badges">
+    <div class="data-badge">AAArchitect.com.au</div>
+    <div class="data-badge">Sydney Market 2025–26</div>
+    <div class="data-badge">170+ Verified Scenarios</div>
+    <div class="data-badge">Updated Quarterly</div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="section" id="pricing">
+  <h2>Simple Pricing</h2>
+  <p class="subtitle">Start free. Upgrade when you're ready.</p>
+  <div class="pricing">
+    <div class="price-card">
+      <div class="tier">Free Trial</div>
+      <div class="price">$0</div>
+      <div class="desc">Forever free, full features</div>
+      <ul>
+        <li>Full Q1–Q9 quality estimation</li>
+        <li>Slope &amp; market adjustments</li>
+        <li>Pool, external &amp; driveway</li>
+        <li>PDF export (with trial watermark)</li>
+        <li>Offline — works without internet</li>
+      </ul>
+      <a href="https://drive.google.com/YOUR_LINK_HERE" class="btn btn-primary" style="width:100%;justify-content:center;" target="_blank">Download Free</a>
+    </div>
+    <div class="price-card featured">
+      <div class="tier">Pro Solo</div>
+      <div class="price">$49 <span>/ month</span></div>
+      <div class="desc">$490/year (save 17%)</div>
+      <ul>
+        <li>Everything in Free</li>
+        <li>No watermark on PDF</li>
+        <li>Custom company logo on PDF</li>
+        <li>Email support</li>
+        <li>Monthly data updates</li>
+        <li>Priority feature requests</li>
+      </ul>
+      <a href="https://gumroad.com/YOUR_LINK_HERE" class="btn btn-green" style="width:100%;justify-content:center;" target="_blank">Get Pro Solo</a>
+    </div>
+    <div class="price-card">
+      <div class="tier">Pro Team</div>
+      <div class="price">$99 <span>/ month</span></div>
+      <div class="desc">$990/year (save 17%)</div>
+      <ul>
+        <li>Everything in Pro Solo</li>
+        <li>3 team user licenses</li>
+        <li>Cloud backup &amp; sync</li>
+        <li>1-on-1 onboarding call</li>
+        <li>Custom data calibration</li>
+      </ul>
+      <a href="mailto:weichengliu404@gmail.com?subject=AusBuild Pro Team Inquiry" class="btn btn-primary" style="width:100%;justify-content:center;">Contact Us</a>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="section">
+  <h2>FAQ</h2>
+  <div class="faq-item">
+    <h3>How accurate are the estimates?</h3>
+    <p>Our algorithm is calibrated with 170+ real data points from AAArchitect.com.au. For ballpark budgeting and feasibility, accuracy is typically within ±10-15%. For final contract pricing, always consult a registered Quantity Surveyor or obtain builder quotes.</p>
+  </div>
+  <div class="faq-item">
+    <h3>Does this replace a Quantity Surveyor?</h3>
+    <p>No. AusBuild Pro is designed for fast preliminary estimates — ideal for screening projects, communicating budget ranges to clients, and internal planning. For DA submissions and contract-stage pricing, engage a professional QS.</p>
+  </div>
+  <div class="faq-item">
+    <h3>What areas does it cover?</h3>
+    <p>Currently optimised for Sydney (NSW) residential new builds. Adelaide (SA) data calibration is coming soon. The base algorithm works for most Australian capital cities with location factor adjustments.</p>
+  </div>
+  <div class="faq-item">
+    <h3>Is it really free?</h3>
+    <p>Yes. The Free version has full estimation features with a small trial watermark on PDF exports. No sign-up, no credit card, no expiry. Pro removes the watermark and adds business branding.</p>
+  </div>
+  <div class="faq-item">
+    <h3>How do I get support?</h3>
+    <p>Email us at <a href="mailto:weichengliu404@gmail.com">weichengliu404@gmail.com</a>. Pro users get priority response within 24 hours.</p>
+  </div>
+</div>
+
+<!-- FEEDBACK -->
+<div style="background:#f1f5f9;padding:40px 20px;text-align:center;">
+  <h2 style="font-size:1.5rem;font-weight:800;color:#0d1b3e;margin-bottom:12px;">We'd Love Your Feedback</h2>
+  <p style="color:#64748b;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto;">Help us improve AusBuild Pro. Tell us what works, what doesn't, and what features you need most.</p>
+  <a href="https://forms.gle/YOUR_FORM_LINK" class="btn btn-primary" target="_blank">Share Feedback (2 min)</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="brand">Aus<span>Build</span> Pro</div>
+  <p>Free residential building cost estimator for Australian builders.</p>
+  <p>Calibrated with 170+ AArch data points | Sydney &amp; Adelaide</p>
+  <p style="margin-top:16px;">
+    <a href="mailto:weichengliu404@gmail.com">weichengliu404@gmail.com</a>
+  </p>
+  <p style="margin-top:20px;font-size:0.75rem;opacity:0.4;">
+    Disclaimer: AusBuild Pro provides preliminary budget estimates for feasibility and planning purposes only.
+    Estimates are not formal quotations. For contract-stage pricing, always consult a registered Quantity Surveyor
+    or obtain competitive builder quotes. Data calibrated from publicly available sources.
+  </p>
+</footer>
+
+</body>
+</html>
