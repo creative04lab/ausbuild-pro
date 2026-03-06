@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AusBuild Pro V4 — Free Trial</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwindcss.config={theme:{extend:{colors:{navy:{'50':'#e6eaf2','100':'#c0c9de','200':'#96a5c8','300':'#6c81b2','400':'#4d66a2','500':'#2e4b93','600':'#29448b','700':'#1f3a80','800':'#173175','900':'#0d1b3e'}}}}}</script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; }
+  canvas { cursor: crosshair; }
+  .cost-row:hover { background: #f0f4ff; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .animate-pulse { animation: pulse 2s infinite; }
+  .gradient-bg { background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5e 100%); }
+  /* Trial Watermark */
+  .watermark-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 9999; overflow: hidden;
+  }
+  .watermark-overlay::before {
+    content: 'FREE TRIAL — Upgrade to Pro at freshvision.gumroad.com';
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 28px; font-weight: 900; color: rgba(37, 99, 235, 0.06);
+    white-space: nowrap; letter-spacing: 4px;
+  }
+  .watermark-overlay::after {
+    content: 'FREE TRIAL — AusBuild Pro V4';
+    position: absolute; top: 20%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 22px; font-weight: 700; color: rgba(37, 99, 235, 0.04);
+    white-space: nowrap; letter-spacing: 3px;
+  }
+  .trial-banner {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 10000;
+    background: linear-gradient(90deg, #1e40af, #2563eb); color: white;
+    padding: 8px 16px; text-align: center; font-size: 13px; font-weight: 600;
+  }
+  .trial-banner a { color: #bfdbfe; text-decoration: underline; }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-900 h-screen flex flex-col overflow-hidden">
+<!-- TRIAL WATERMARK -->
+<div class="watermark-overlay"></div>
+<div class="trial-banner">
+  Free Trial Version — <a href="https://freshvision.gumroad.com/l/ausbuild-pro" target="_blank">Upgrade to Pro</a> for no watermark + custom logo + monthly data updates
+</div>
+<!-- TOP NAV -->
+<nav class="gradient-bg text-white px-5 flex items-center justify-between h-12 z-50 flex-shrink-0">
+  <div class="text-lg font-extrabold tracking-wide">
+    Aus<span class="text-blue-300">Build</span> Pro <sup class="text-[9px] opacity-50">V4</sup> <span class="ml-2 px-2 py-0.5 bg-yellow-500 text-[9px] text-black rounded-full font-bold">FREE TRIAL</span>
+  </div>
+  <div class="flex gap-1" id="nav-tabs">
+    <button onclick="switchTab('calc')" data-tab="calc" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35">📐 Lot Yield</button>
+    <button onclick="switchTab('design')" data-tab="design" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">🎨 Design AI</button>
+    <button onclick="switchTab('quote')" data-tab="quote" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">💰 Budget Estimate</button>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="text-[10px] opacity-50">R-Codes 2024 | DC 2.2 | AIQS</span>
+    <button onclick="alert('Login requires database connection.\\nAdmin dashboard available after login.')" class="px-3 py-1 text-xs bg-blue-500 rounded-full hover:bg-blue-600">Login</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="flex-1 overflow-hidden">
+
+<!-- ===== TAB 1: LOT YIELD ===== -->
+<div id="tab-calc" class="tab-content active h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">📐 Lot Yield Calculator</h2>
+      <p class="text-xs text-gray-500 mb-4">WA R-Codes Volume 1 (March 2024)</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Code System</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="codeSystem" onchange="calcYield()">
+            <option value="wa">WA R-Codes</option>
+            <option value="sa">SA (Coming Soon)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">R-Code Density</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="rCode" onchange="calcYield()">
+            <option value="R20">R20 — Low Density</option>
+            <option value="R25">R25 — Low-Medium</option>
+            <option value="R30" selected>R30 — Medium</option>
+            <option value="R35">R35 — Medium</option>
+            <option value="R40">R40 — Medium-High</option>
+            <option value="R60">R60 — High</option>
+            <option value="R80">R80 — Very High</option>
+            <option value="R100">R100 — Multi</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Dwelling Type</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="dwType" onchange="calcYield()">
+            <option value="single">Single House</option>
+            <option value="grouped">Grouped Dwelling</option>
+            <option value="multiple">Multiple Dwelling</option>
+          </select>
+        </div>
+        <hr class="my-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Total Area (m²)</label>
+            <input type="number" value="850" class="w-full border rounded-lg px-3 py-2 text-sm" id="totalArea" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Frontage (m)</label>
+            <input type="number" value="20" class="w-full border rounded-lg px-3 py-2 text-sm" id="frontage" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Depth (m)</label>
+            <input type="number" value="42.5" class="w-full border rounded-lg px-3 py-2 text-sm" id="depth">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Truncation (m²)</label>
+            <input type="number" value="0" class="w-full border rounded-lg px-3 py-2 text-sm" id="truncation">
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isCorner" onchange="calcYield()"> Corner Lot</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isBattleaxe"> Battle-axe</label>
+        </div>
+        <button onclick="calcYield()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          ⚡ Calculate Yield
+        </button>
+      </div>
+    </div>
+    <!-- Right Panel: Results -->
+    <div class="flex-1 p-6 overflow-y-auto bg-gray-50">
+      <div id="yieldResults">
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-green-500">
+            <div class="text-3xl font-black text-green-600" id="lotCount">2</div>
+            <div class="text-xs text-gray-500 mt-1">Potential Lots</div>
+          </div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-blue-500">
+            <div class="text-3xl font-black text-blue-600" id="avgPerLot">425 m²</div>
+            <div class="text-xs text-gray-500 mt-1">Avg per Lot</div>
+          </div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-purple-500">
+            <div class="text-3xl font-black text-purple-600" id="effArea">850 m²</div>
+            <div class="text-xs text-gray-500 mt-1">Effective Area</div>
+          </div>
+        </div>
+        <!-- Compliance Table -->
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="font-bold text-sm mb-3">📋 R-Code Compliance Check</h3>
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50"><th class="text-left p-2">Clause</th><th class="text-left p-2">Requirement</th><th class="text-left p-2">Actual</th><th class="p-2">Status</th></tr></thead>
+            <tbody id="complianceTable">
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Min Lot Area</td><td class="p-2">≥ 300 m²</td><td class="p-2">425 m²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Avg Lot Area</td><td class="p-2">≥ 350 m²</td><td class="p-2">425 m²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.2 Min Frontage</td><td class="p-2">≥ 10 m</td><td class="p-2">20 m</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.1 Primary Setback</td><td class="p-2">≥ 4 m</td><td class="p-2">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold">⏳ TBD</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.3 Open Space</td><td class="p-2">≥ 50%</td><td class="p-2">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold">⏳ TBD</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: DESIGN (50/50 split) ===== -->
+<div id="tab-design" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- LEFT 50%: Drawing Canvas (blank for user to draw) -->
+    <div class="w-1/2 flex flex-col border-r-2 border-gray-300">
+      <!-- Toolbar -->
+      <div class="bg-white border-b px-3 py-2 flex items-center gap-2 flex-shrink-0">
+        <button onclick="setTool('draw')" class="draw-tool px-2.5 py-1 text-xs rounded bg-navy-900 text-white font-bold">✏️ Draw</button>
+        <button onclick="setTool('rect')" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">⬜ Room</button>
+        <button onclick="setTool('line')" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">━ Wall</button>
+        <button onclick="setTool('door')" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🚪 Door</button>
+        <button onclick="setTool('window')" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🪟 Window</button>
+        <button onclick="setTool('erase')" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🧹 Erase</button>
+        <select id="penWidth" class="px-2 py-1 border rounded text-xs" onchange="penW=parseInt(this.value)">
+          <option value="2">Thin 2px</option>
+          <option value="3" selected>Med 3px</option>
+          <option value="6">Thick 6px</option>
+          <option value="10">Wall 10px</option>
+        </select>
+        <input type="color" value="#222222" id="penColor" class="w-6 h-6 border rounded cursor-pointer" onchange="penC=this.value">
+        <span class="flex-1"></span>
+        <button onclick="clearCanvas()" class="px-2.5 py-1 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200 font-bold">🗑 Clear</button>
+      </div>
+      <!-- Canvas fills remaining space -->
+      <div class="flex-1 bg-white relative overflow-hidden">
+        <canvas id="drawCanvas" class="absolute inset-0 w-full h-full" style="cursor:crosshair"></canvas>
+      </div>
+    </div>
+
+    <!-- RIGHT 50%: AI Render Output -->
+    <div class="w-1/2 flex flex-col bg-[#1a1a2e]">
+      <!-- Top bar: view mode + status -->
+      <div class="px-3 py-1.5 bg-gradient-to-r from-[#0d1b3e] to-[#1a2d5e] text-white text-xs font-bold flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-green-500" id="aiDot"></span>
+          <span id="aiStatus">🤖 AI Render — Enter prompt and click Generate</span>
+        </div>
+        <div class="flex gap-1">
+          <button onclick="setViewMode('floor')" class="view-btn px-3 py-1 rounded bg-white/15 text-white">📐 Floor Plan</button>
+          <button onclick="setViewMode('ext')" class="view-btn px-3 py-1 rounded text-white/50 hover:bg-white/5">🏠 3D Exterior</button>
+          <button onclick="setViewMode('int')" class="view-btn px-3 py-1 rounded text-white/50 hover:bg-white/5">🛋️ 3D Interior</button>
+        </div>
+      </div>
+      <!-- Prompt input row + Generate button -->
+      <div class="px-2 py-1.5 bg-[#0d1b3e] border-b border-white/10 flex gap-2 items-start flex-shrink-0">
+        <textarea id="aiPromptInput" rows="2"
+          placeholder="Enter prompt (optional) — e.g.: modern Australian house with timber facade, swimming pool, native landscaping..."
+          class="flex-1 text-xs rounded px-2 py-1.5 bg-white/10 text-white placeholder-white/30 border border-white/20 focus:outline-none focus:border-white/50 resize-none leading-relaxed"
+          style="min-height:44px;max-height:80px;"></textarea>
+        <button onclick="onGenerateClick()"
+          class="flex-shrink-0 px-3 py-2 rounded text-xs font-bold bg-gradient-to-b from-indigo-500 to-indigo-700 text-white hover:from-indigo-400 hover:to-indigo-600 active:scale-95 transition-all shadow flex items-center gap-1.5"
+          id="generateBtn" style="min-width:80px;">
+          <span id="generateBtnIcon">✨</span> <span id="generateBtnText">Generate</span>
+        </button>
+      </div>
+      <!-- Render display area — fills remaining space, shows AI image -->
+      <div class="flex-1 flex items-center justify-center overflow-hidden" id="renderArea">
+        <div id="svgContainer" class="w-full h-full" style="display:none;"></div>
+        <canvas id="renderCanvas" class="w-full h-full" style="display:none;"></canvas>
+        <img id="aiRenderImg" class="max-w-full max-h-full object-contain" style="display:none;" />
+        <div id="renderPlaceholder" class="text-center text-white/40">
+          <div class="text-5xl mb-4">🎨</div>
+          <div class="text-sm font-semibold">Draw on the canvas</div>
+          <div class="text-xs mt-1 text-white/25">Then enter a prompt and click Generate</div>
+        </div>
+        <div id="renderLoading" style="display:none;" class="text-center text-white">
+          <div class="inline-block w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin mb-3"></div>
+          <div class="text-sm font-semibold">AI Rendering...</div>
+          <div class="text-xs mt-1 text-white/50">Stability AI ControlNet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: QUOTE ===== -->
+<div id="tab-quote" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- Left: Config -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-1">💰 Preliminary Budget Estimator</h2>
+      <p class="text-xs text-gray-500 mb-4">AArch S0-S7 Data | Sydney & Adelaide Market 2025-26</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Location</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="locationSelect" oninput="updateQuote()" onchange="updateQuote()">
+            <option value="sydney" selected>Sydney (NSW) — Baseline</option>
+            <option value="adelaide">Adelaide (SA) — ~25% lower</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Build Type</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="buildType" oninput="updateQuote()" onchange="updateQuote()">
+            <option value="new_build" selected>New Build</option>
+            <option value="addition">Addition & Alteration</option>
+            <option value="reno_only">Renovation Only</option>
+            <option value="bathroom">Bathroom Renovation</option>
+            <option value="kitchen">Kitchen Renovation</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Quality Level</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="qualityLevel" oninput="updateQuote()" onchange="updateQuote()">
+            <option value="q1">Q1 — Basic / Project Home</option>
+            <option value="q2">Q2 — Standard Project Home</option>
+            <option value="q3">Q3 — Standard+ / Volume Build</option>
+            <option value="q4">Q4 — Mid-Range Custom</option>
+            <option value="q5" selected>Q5 — Mid-High Custom</option>
+            <option value="q6">Q6 — Quality Custom Home</option>
+            <option value="q7">Q7 — High-End Custom</option>
+            <option value="q8">Q8 — Premium Architect</option>
+            <option value="q9">Q9 — Luxury / Architectural</option>
+          </select>
+        </div>
+
+        <!-- New Build Specific Fields -->
+        <div id="newBuildFields" style="display:block;">
+          <div class="space-y-2">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Internal Area (m²)</label>
+              <input type="number" value="250" id="newInternalArea" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">External Area (m²) <span class="text-gray-400 font-normal">— alfresco / decking</span></label>
+              <input type="number" value="50" id="newExternalArea" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Driveway Area (m²)</label>
+              <input type="number" value="30" id="driveArea" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Pool Area (m²) <span class="text-gray-400 font-normal">— 0 if none</span></label>
+              <input type="number" value="0" id="poolArea" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+            </div>
+          </div>
+        </div>
+
+        <!-- A&A Specific Fields -->
+        <div id="aaFields" style="display:none;">
+          <div class="space-y-2">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">New Build Area (m²)</label>
+              <input type="number" value="50" id="aaNewArea" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Renovation Area (m²)</label>
+              <input type="number" value="100" id="aaRenoArea" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Reno/Bathroom/Kitchen Fields -->
+        <div id="renoFields" style="display:none;">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Renovation Area (m²)</label>
+            <input type="number" value="12" id="renoArea" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Site Conditions</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="siteCondition" oninput="updateQuote()" onchange="updateQuote()">
+            <option value="flat_good" selected>Flat + Good Access</option>
+            <option value="med_slope_avg">Medium Slope (10-25°) + Average Access</option>
+            <option value="steep_difficult">Steep (>25°) + Difficult Access</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Contingency & Margin (%)</label>
+          <input type="number" value="20" id="margin" class="w-full border rounded-lg px-3 py-2 text-sm" oninput="updateQuote()" onchange="updateQuote()">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Market Conditions</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="marketCondition" oninput="updateQuote()" onchange="updateQuote()">
+            <option value="slow">Recession / Slow (range narrows)</option>
+            <option value="normal" selected>Normal Market</option>
+            <option value="boom">Boom Market (+6% high end)</option>
+          </select>
+        </div>
+
+        <button onclick="updateQuote()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          ⚡ Generate Estimate
+        </button>
+      </div>
+    </div>
+    <!-- Right: Quote Results -->
+    <div class="flex-1 overflow-y-auto p-6 bg-gray-50" id="quoteResults">
+      <div class="text-center text-gray-500 py-12">
+        <div class="text-4xl mb-2">🌊</div>
+        <p class="text-sm">Set parameters and click "Generate Estimate" for a preliminary budget range</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== TAB SWITCHING =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.className = btn.dataset.tab === tab
+      ? 'tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35'
+      : 'tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10';
+  });
+  if (tab === 'quote') updateQuote();
+  if (tab === 'design') { setTimeout(resizeCanvas, 30); }
+}
+
+// ===== LOT YIELD CALCULATOR =====
+const RCODES = {
+  R20: {min:350,avg:450,front:10,setback:6,open:50},
+  R25: {min:300,avg:350,front:10,setback:4,open:50},
+  R30: {min:260,avg:300,front:10,setback:4,open:50},
+  R35: {min:220,avg:260,front:8,setback:4,open:50},
+  R40: {min:180,avg:220,front:8,setback:3,open:45},
+  R60: {min:150,avg:180,front:7,setback:2,open:40},
+  R80: {min:120,avg:150,front:6,setback:2,open:35},
+  R100:{min:100,avg:120,front:5,setback:1.5,open:30},
+};
+function calcYield() {
+  const code = document.getElementById('rCode').value;
+  const area = parseFloat(document.getElementById('totalArea').value) || 0;
+  const front = parseFloat(document.getElementById('frontage').value) || 0;
+  const rc = RCODES[code] || RCODES.R30;
+  const lots = Math.max(1, Math.floor(area / rc.avg));
+  const avg = lots > 0 ? Math.round(area / lots) : 0;
+  document.getElementById('lotCount').textContent = lots;
+  document.getElementById('avgPerLot').textContent = avg + ' m²';
+  document.getElementById('effArea').textContent = area + ' m²';
+}
+
+// ===== DRAWING CANVAS =====
+let currentTool = 'draw', drawing = false, lastX = 0, lastY = 0;
+let penW = 3, penC = '#222222';
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+
+let canvasImageBackup = null;
+function resizeCanvas() {
+  const parent = canvas.parentElement;
+  const pw = parent.clientWidth;
+  const ph = parent.clientHeight;
+  if (pw === 0 || ph === 0) return;
+  if (canvas.width > 0 && canvas.height > 0) {
+    try { canvasImageBackup = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch(e) { canvasImageBackup = null; }
+  }
+  canvas.width = pw;
+  canvas.height = ph;
+  drawGrid();
+  if (canvasImageBackup) {
+    try { ctx.putImageData(canvasImageBackup, 0, 0); } catch(e) {}
+  }
+}
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 50);
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  drawing = true;
+  lastX = (touch.clientX - rect.left) * (canvas.width / rect.width);
+  lastY = (touch.clientY - rect.top) * (canvas.height / rect.height);
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!drawing) return;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+  ctx.beginPath(); ctx.lineCap = 'round';
+  if (currentTool === 'erase') { ctx.strokeStyle = '#fff'; ctx.lineWidth = 25; }
+  else { ctx.strokeStyle = penC; ctx.lineWidth = penW; }
+  ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
+  [lastX, lastY] = [x, y];
+}, { passive: false });
+canvas.addEventListener('touchend', () => { drawing = false; });
+
+function drawGrid() {
+  ctx.save(); ctx.strokeStyle = '#eee'; ctx.lineWidth = 0.5;
+  for (let x = 0; x < canvas.width; x += 25) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+  for (let y = 0; y < canvas.height; y += 25) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+  ctx.restore();
+}
+
+canvas.onmousedown = (e) => {
+  drawing = true;
+  const rect = canvas.getBoundingClientRect();
+  lastX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  lastY = (e.clientY - rect.top) * (canvas.height / rect.height);
+};
+canvas.onmousemove = (e) => {
+  if (!drawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  ctx.beginPath(); ctx.lineCap = 'round';
+  if (currentTool === 'erase') { ctx.strokeStyle = '#fff'; ctx.lineWidth = 25; }
+  else { ctx.strokeStyle = penC; ctx.lineWidth = penW; }
+  ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
+  [lastX, lastY] = [x, y];
+};
+
+let autoRenderTimer = null;
+let renderCount = 0;
+let currentViewMode = 'floor';
+// AI rendered images cache (will be populated by Stability AI)
+var aiRenderedImages = { floor: null, ext: null, int: null };
+
+function setTool(tool) {
+  currentTool = tool;
+  document.querySelectorAll('.draw-tool').forEach(b => b.classList.remove('bg-navy-900','text-white'));
+  document.querySelectorAll('.draw-tool').forEach(b => b.classList.add('bg-gray-200'));
+  event.target.classList.remove('bg-gray-200');
+  event.target.classList.add('bg-navy-900','text-white');
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+}
+
+// Manual generate button handler
+function onGenerateClick() {
+  // Clear cache for current mode so it re-generates
+  aiRenderedImages[currentViewMode] = null;
+  generateAIRender().catch((err) => {
+    showRender();
+    console.error('Generate failed:', err);
+  });
+}
+
+// Legacy: kept for compatibility but no longer called automatically
+function triggerAutoRender() {
+  // No-op: auto-render removed. Use the Generate button instead.
+}
+
+canvas.onmouseup = () => { drawing = false; };
+
+function setViewMode(mode) {
+  currentViewMode = mode;
+  document.querySelectorAll('.view-btn').forEach(b => {
+    b.classList.remove('bg-white/15');
+    b.classList.add('text-white/50');
+  });
+  event.target.classList.add('bg-white/15');
+  event.target.classList.remove('text-white/50');
+  event.target.classList.add('text-white');
+  // Show cached AI render if available, otherwise show canvas fallback
+  // (No auto-generate — user must click the Generate button)
+  showRender();
+}
+
+// ===== REALISTIC 3D RENDERING ENGINES (Canvas 2D) =====
+
+// Generate Floor Plan SVG (keep SVG approach, enhance detail)
+function generateFloorPlanSVG(w, h) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" style="width:100%;height:100%;background:#fafafa">
+    <defs>
+      <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e8e8e8" stroke-width="0.3"/></pattern>
+      <filter id="shadow"><feDropShadow dx="1" dy="1" stdDeviation="2" flood-opacity="0.08"/></filter>
+    </defs>
+    <rect width="${w}" height="${h}" fill="url(#grid)"/>
+    <rect x="15" y="10" width="280" height="35" rx="3" fill="#0d1b3e" filter="url(#shadow)"/>
+    <text x="25" y="30" fill="white" font-size="11" font-family="Arial" font-weight="bold">FLOOR PLAN — ARCHITECTURAL LAYOUT</text>
+    <text x="200" y="30" fill="#8fa4d0" font-size="8" font-family="Arial">Scale 1:100 | A3</text>
+    <g transform="translate(${w-50},25)"><circle r="14" fill="white" stroke="#333" stroke-width="0.8"/><polygon points="0,-11 3,2 -3,2" fill="#0d1b3e"/><text y="-3" text-anchor="middle" font-size="6" fill="#0d1b3e" font-weight="bold">N</text></g>
+    <rect x="60" y="65" width="${w-120}" height="${h-120}" fill="none" stroke="#1a1a1a" stroke-width="6" rx="1"/>
+    <line x1="${w*0.45}" y1="65" x2="${w*0.45}" y2="${h*0.55}" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="60" y1="${h*0.55}" x2="${w-60}" y2="${h*0.55}" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="${w*0.65}" y1="${h*0.55}" x2="${w*0.65}" y2="${h-55}" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="${w*0.45}" y1="${h*0.32}" x2="${w-60}" y2="${h*0.32}" stroke="#1a1a1a" stroke-width="4"/>
+    <rect x="63" y="68" width="${w*0.45-66}" height="${h*0.55-71}" fill="#f0f7ff" opacity="0.4"/>
+    <rect x="${w*0.45+3}" y="68" width="${w-w*0.45-66}" height="${h*0.32-71}" fill="#fff8f0" opacity="0.4"/>
+    <rect x="${w*0.45+3}" y="${h*0.32+3}" width="${w-w*0.45-66}" height="${h*0.55-h*0.32-6}" fill="#f0fff4" opacity="0.4"/>
+    <rect x="63" y="${h*0.55+3}" width="${w*0.65-66}" height="${h-h*0.55-58}" fill="#faf0ff" opacity="0.3"/>
+    <rect x="${w*0.65+3}" y="${h*0.55+3}" width="${w-w*0.65-66}" height="${h-h*0.55-58}" fill="#fff5f5" opacity="0.3"/>
+    <text x="${(60+w*0.45)/2}" y="${(68+h*0.55)/2-8}" text-anchor="middle" font-size="13" font-family="Arial" fill="#1a3a6a" font-weight="bold">LIVING / DINING</text>
+    <text x="${(60+w*0.45)/2}" y="${(68+h*0.55)/2+8}" text-anchor="middle" font-size="9" font-family="Arial" fill="#6b8cb8">5.2m × 4.8m = 25.0 m²</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(68+h*0.32)/2-5}" text-anchor="middle" font-size="12" font-family="Arial" fill="#6a3a1a" font-weight="bold">MASTER BEDROOM</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(68+h*0.32)/2+9}" text-anchor="middle" font-size="9" font-family="Arial" fill="#b88c6b">4.0m × 3.5m = 14.0 m²</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(h*0.32+h*0.55)/2}" text-anchor="middle" font-size="11" font-family="Arial" fill="#1a6a3a" font-weight="bold">KITCHEN</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(h*0.32+h*0.55)/2+13}" text-anchor="middle" font-size="9" font-family="Arial" fill="#6bb88c">3.8m × 2.8m = 10.6 m²</text>
+    <text x="${(63+w*0.65)/2}" y="${(h*0.55+h-55)/2}" text-anchor="middle" font-size="11" font-family="Arial" fill="#4a1a6a" font-weight="bold">BEDROOM 2</text>
+    <text x="${(63+w*0.65)/2}" y="${(h*0.55+h-55)/2+13}" text-anchor="middle" font-size="9" font-family="Arial" fill="#8c6bb8">3.5m × 3.2m = 11.2 m²</text>
+    <text x="${(w*0.65+w-60)/2}" y="${(h*0.55+h-55)/2}" text-anchor="middle" font-size="10" font-family="Arial" fill="#6a1a1a" font-weight="bold">BATHROOM</text>
+    <text x="${(w*0.65+w-60)/2}" y="${(h*0.55+h-55)/2+13}" text-anchor="middle" font-size="9" font-family="Arial" fill="#b86b6b">2.4m × 2.2m</text>
+    <path d="M ${w*0.45-20} ${h*0.4} A 20 20 0 0 1 ${w*0.45} ${h*0.4-20}" fill="none" stroke="#666" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <line x1="${w*0.45-20}" y1="${h*0.4}" x2="${w*0.45}" y2="${h*0.4}" stroke="#666" stroke-width="1"/>
+    <path d="M ${w*0.3} ${h*0.55} A 18 18 0 0 0 ${w*0.3+18} ${h*0.55+18}" fill="none" stroke="#666" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <line x1="60" y1="${h*0.25}" x2="60" y2="${h*0.4}" stroke="#4a9eff" stroke-width="3"/>
+    <line x1="62" y1="${h*0.25}" x2="62" y2="${h*0.4}" stroke="#4a9eff" stroke-width="1"/>
+    <line x1="${w*0.6}" y1="65" x2="${w*0.8}" y2="65" stroke="#4a9eff" stroke-width="3"/>
+    <line x1="${w*0.6}" y1="67" x2="${w*0.8}" y2="67" stroke="#4a9eff" stroke-width="1"/>
+    <g stroke="#999" stroke-width="0.5" fill="#999" font-size="8" font-family="Arial">
+      <line x1="60" y1="${h-30}" x2="${w-60}" y2="${h-30}"/>
+      <line x1="60" y1="${h-33}" x2="60" y2="${h-27}"/>
+      <line x1="${w-60}" y1="${h-33}" x2="${w-60}" y2="${h-27}"/>
+      <text x="${w/2}" y="${h-22}" text-anchor="middle">${((w-120)/10).toFixed(1)}m</text>
+      <line x1="${w-30}" y1="65" x2="${w-30}" y2="${h-55}"/>
+      <line x1="${w-33}" y1="65" x2="${w-27}" y2="65"/>
+      <line x1="${w-33}" y1="${h-55}" x2="${w-27}" y2="${h-55}"/>
+      <text x="${w-18}" y="${h/2}" text-anchor="middle" transform="rotate(90,${w-18},${h/2})">${((h-120)/10).toFixed(1)}m</text>
+    </g>
+    <rect x="${w*0.48}" y="${h*0.34}" width="35" height="8" rx="1" fill="none" stroke="#888" stroke-width="0.8"/>
+    <circle cx="${w*0.48+10}" cy="${h*0.34+4}" r="2.5" fill="none" stroke="#888" stroke-width="0.5"/>
+    <circle cx="${w*0.48+25}" cy="${h*0.34+4}" r="2.5" fill="none" stroke="#888" stroke-width="0.5"/>
+    <ellipse cx="${w*0.75}" cy="${h*0.65}" rx="8" ry="5" fill="none" stroke="#888" stroke-width="0.8"/>
+    <rect x="${w*0.82}" y="${h*0.62}" width="6" height="9" rx="1" fill="none" stroke="#888" stroke-width="0.8"/>
+    <g transform="translate(${w-180},${h-18})">
+      <rect width="60" height="4" fill="#333"/><rect x="60" width="60" height="4" fill="#999"/>
+      <text x="0" y="-3" font-size="7" fill="#666" font-family="Arial">0</text>
+      <text x="60" y="-3" font-size="7" fill="#666" font-family="Arial" text-anchor="middle">3m</text>
+      <text x="120" y="-3" font-size="7" fill="#666" font-family="Arial" text-anchor="end">6m</text>
+    </g>
+    <rect x="${w-180}" y="12" width="145" height="30" rx="3" fill="white" stroke="#ddd" stroke-width="0.5" filter="url(#shadow)"/>
+    <text x="${w-170}" y="25" font-size="8" font-family="Arial" fill="#666">Total: <tspan font-weight="bold" fill="#0d1b3e">85.6 m²</tspan> (3 Bed / 1 Bath)</text>
+    <text x="${w-170}" y="36" font-size="7" font-family="Arial" fill="#999">AI Generated | Canvas 2D Render</text>
+  </svg>`;
+}
+
+// Render Exterior (Canvas 2D - Realistic 3D)
+function generateExteriorCanvas(canvas) {
+  const c = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Sky gradient - warm golden hour
+  const skyGrad = c.createLinearGradient(0, 0, 0, h * 0.6);
+  skyGrad.addColorStop(0, '#ffa945');
+  skyGrad.addColorStop(0.3, '#ff8c42');
+  skyGrad.addColorStop(0.6, '#87CEEB');
+  skyGrad.addColorStop(1, '#d4eaf7');
+  c.fillStyle = skyGrad;
+  c.fillRect(0, 0, w, h * 0.6);
+
+  // Soft clouds
+  c.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  c.beginPath(); c.arc(w * 0.15, h * 0.15, 50, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(w * 0.25, h * 0.12, 35, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(w * 0.75, h * 0.2, 60, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(w * 0.85, h * 0.16, 40, 0, Math.PI * 2); c.fill();
+
+  // Grass
+  const grassGrad = c.createLinearGradient(0, h * 0.6, 0, h);
+  grassGrad.addColorStop(0, '#5a8a3c');
+  grassGrad.addColorStop(1, '#3a6a1c');
+  c.fillStyle = grassGrad;
+  c.fillRect(0, h * 0.6, w, h * 0.4);
+
+  // Grass stripe pattern
+  c.strokeStyle = 'rgba(0, 0, 0, 0.03)';
+  c.lineWidth = 8;
+  for (let i = 0; i < w; i += 60) {
+    c.beginPath(); c.moveTo(i, h * 0.6); c.lineTo(i + 20, h); c.stroke();
+  }
+
+  // Driveway
+  c.fillStyle = '#c0b8a8';
+  c.beginPath();
+  c.moveTo(w * 0.15, h);
+  c.lineTo(w * 0.4, h);
+  c.lineTo(w * 0.38, h * 0.62);
+  c.lineTo(w * 0.25, h * 0.62);
+  c.closePath();
+  c.fill();
+
+  // Driveway texture
+  c.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+  c.lineWidth = 2;
+  for (let i = h * 0.62; i < h; i += 15) {
+    c.beginPath(); c.moveTo(w * 0.15, i); c.lineTo(w * 0.4, i); c.stroke();
+  }
+
+  // Main house body - left side (lighter)
+  c.fillStyle = '#f5f0e8';
+  c.fillRect(w * 0.18, h * 0.3, w * 0.55, h * 0.33);
+
+  // Main house body - right side (shadow)
+  c.fillStyle = '#d8cdc0';
+  c.fillRect(w * 0.55, h * 0.22, w * 0.25, h * 0.4);
+
+  // Roof - modern Colorbond
+  const roofGrad = c.createLinearGradient(w * 0.15, h * 0.26, w * 0.76, h * 0.3);
+  roofGrad.addColorStop(0, '#555555');
+  roofGrad.addColorStop(1, '#3a3a3a');
+  c.fillStyle = roofGrad;
+  c.beginPath();
+  c.moveTo(w * 0.15, h * 0.3);
+  c.lineTo(w * 0.76, h * 0.3);
+  c.lineTo(w * 0.76, h * 0.26);
+  c.lineTo(w * 0.46, h * 0.2);
+  c.lineTo(w * 0.15, h * 0.26);
+  c.closePath();
+  c.fill();
+
+  // Roof edge shadow
+  c.strokeStyle = '#222222';
+  c.lineWidth = 3;
+  c.beginPath(); c.moveTo(w * 0.15, h * 0.3); c.lineTo(w * 0.76, h * 0.3); c.stroke();
+
+  // Second storey roof
+  c.fillStyle = '#474747';
+  c.beginPath();
+  c.moveTo(w * 0.53, h * 0.22);
+  c.lineTo(w * 0.82, h * 0.22);
+  c.lineTo(w * 0.82, h * 0.18);
+  c.lineTo(w * 0.67, h * 0.13);
+  c.lineTo(w * 0.53, h * 0.18);
+  c.closePath();
+  c.fill();
+
+  // Large floor-to-ceiling windows with reflections
+  c.fillStyle = '#87ceeb';
+  c.fillRect(w * 0.22, h * 0.33, w * 0.1, h * 0.26);
+  c.fillRect(w * 0.34, h * 0.33, w * 0.15, h * 0.26);
+
+  // Window reflections
+  c.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  c.fillRect(w * 0.22, h * 0.33, w * 0.1, h * 0.08);
+  c.fillRect(w * 0.34, h * 0.33, w * 0.15, h * 0.08);
+
+  // Window panes
+  c.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(w * 0.27, h * 0.33); c.lineTo(w * 0.27, h * 0.59); c.stroke();
+  c.beginPath(); c.moveTo(w * 0.39, h * 0.33); c.lineTo(w * 0.39, h * 0.59); c.stroke();
+  c.beginPath(); c.moveTo(w * 0.44, h * 0.33); c.lineTo(w * 0.44, h * 0.59); c.stroke();
+
+  // Upper storey windows
+  c.fillStyle = '#87ceeb';
+  c.fillRect(w * 0.58, h * 0.25, w * 0.08, h * 0.12);
+  c.fillRect(w * 0.69, h * 0.25, w * 0.06, h * 0.12);
+  c.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  c.fillRect(w * 0.58, h * 0.25, w * 0.08, h * 0.04);
+  c.fillRect(w * 0.69, h * 0.25, w * 0.06, h * 0.04);
+
+  // Side window
+  c.fillStyle = '#87ceeb';
+  c.fillRect(w * 0.58, h * 0.42, w * 0.18, h * 0.16);
+  c.fillStyle = 'rgba(255, 255, 255, 0.25)';
+  c.fillRect(w * 0.58, h * 0.42, w * 0.18, h * 0.05);
+
+  // Front door
+  c.fillStyle = '#3a2a1a';
+  c.fillRect(w * 0.5, h * 0.4, w * 0.04, h * 0.22);
+  c.fillStyle = '#c0a060';
+  c.beginPath(); c.arc(w * 0.53, h * 0.52, 2, 0, Math.PI * 2); c.fill();
+
+  // Timber accent battens
+  c.fillStyle = '#8B6914';
+  c.fillRect(w * 0.18, h * 0.3, w * 0.55, 5);
+  c.fillStyle = '#6B4914';
+  c.fillRect(w * 0.15, h * 0.26, 5, h * 0.04 + 2);
+
+  // Eucalyptus trees
+  c.fillStyle = '#5a4a30';
+  c.fillRect(w * 0.075, h * 0.4, 5, h * 0.22);
+  c.fillStyle = '#3a7a2a';
+  c.beginPath(); c.ellipse(w * 0.085, h * 0.38, 22, 28, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#4a8a3a';
+  c.beginPath(); c.ellipse(w * 0.085, h * 0.35, 16, 20, 0, 0, Math.PI * 2); c.fill();
+
+  c.fillStyle = '#5a4a30';
+  c.fillRect(w * 0.85, h * 0.35, 6, h * 0.27);
+  c.fillStyle = '#3a7a2a';
+  c.beginPath(); c.ellipse(w * 0.858, h * 0.32, 25, 32, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#4a8a3a';
+  c.beginPath(); c.ellipse(w * 0.858, h * 0.28, 18, 24, 0, 0, Math.PI * 2); c.fill();
+
+  // Native shrubs
+  c.fillStyle = '#5a7a3a';
+  c.beginPath(); c.ellipse(w * 0.35, h * 0.55, 15, 12, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(w * 0.5, h * 0.58, 18, 10, 0, 0, Math.PI * 2); c.fill();
+
+  // Pool with reflection
+  c.fillStyle = '#0066bb';
+  c.beginPath(); c.ellipse(w * 0.7, h * 0.68, 50, 25, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(255, 200, 100, 0.2)';
+  c.beginPath(); c.ellipse(w * 0.7, h * 0.68, 50, 8, 0, 0, Math.PI * 2); c.fill();
+
+  // Building shadow on ground
+  c.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  c.beginPath();
+  c.moveTo(w * 0.18, h * 0.63);
+  c.lineTo(w * 0.73, h * 0.63);
+  c.lineTo(w * 0.75, h);
+  c.lineTo(w * 0.15, h);
+  c.closePath();
+  c.fill();
+
+  // Window ambient glow (evening)
+  c.fillStyle = 'rgba(255, 200, 100, 0.15)';
+  c.fillRect(w * 0.22, h * 0.35, w * 0.1, h * 0.22);
+  c.fillRect(w * 0.34, h * 0.35, w * 0.15, h * 0.22);
+
+  // Info overlay
+  c.fillStyle = 'rgba(13, 27, 62, 0.85)';
+  c.fillRect(0, h - 50, w, 50);
+  c.fillStyle = 'white';
+  c.font = 'bold 14px Arial';
+  c.fillText('Modern Australian Two-Storey House', 15, h - 25);
+  c.font = '12px Arial';
+  c.fillStyle = '#aaa';
+  c.fillText('3D Exterior Render | Canvas 2D | Golden Hour Lighting', 15, h - 8);
+}
+
+// Render Interior (Canvas 2D - One-point perspective)
+function generateInteriorCanvas(canvas) {
+  const c = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Background - warm afternoon light
+  const bgGrad = c.createLinearGradient(0, 0, w, h);
+  bgGrad.addColorStop(0, '#f5e6d3');
+  bgGrad.addColorStop(0.5, '#e8dcc8');
+  bgGrad.addColorStop(1, '#d4c8bc');
+  c.fillStyle = bgGrad;
+  c.fillRect(0, 0, w, h);
+
+  // Ceiling
+  c.fillStyle = '#f0ebe5';
+  c.fillRect(0, 0, w, h * 0.25);
+
+  // Ceiling shadow at top
+  c.fillStyle = 'rgba(0, 0, 0, 0.08)';
+  c.fillRect(0, 0, w, 20);
+
+  // Left wall
+  c.fillStyle = '#e8e2d8';
+  c.fillRect(0, h * 0.25, w * 0.3, h * 0.75);
+
+  // Left wall shadow/depth
+  c.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  c.fillRect(0, h * 0.25, 15, h * 0.75);
+
+  // Right wall with perspective
+  c.fillStyle = '#ece8e0';
+  c.beginPath();
+  c.moveTo(w, h * 0.25);
+  c.lineTo(w * 0.3, h * 0.25);
+  c.lineTo(w * 0.32, h);
+  c.lineTo(w, h);
+  c.closePath();
+  c.fill();
+
+  // Large window on right with garden view
+  c.fillStyle = '#87ceeb';
+  c.fillRect(w * 0.7, h * 0.28, w * 0.28, h * 0.55);
+
+  // Window frame
+  c.strokeStyle = '#8B6914';
+  c.lineWidth = 6;
+  c.strokeRect(w * 0.7, h * 0.28, w * 0.28, h * 0.55);
+
+  // Window glass reflection
+  c.fillStyle = 'rgba(200, 220, 255, 0.25)';
+  c.fillRect(w * 0.7, h * 0.28, w * 0.28, h * 0.15);
+
+  // Garden view through window (trees, grass)
+  c.fillStyle = '#5a8a3c';
+  c.fillRect(w * 0.7, h * 0.5, w * 0.28, h * 0.33);
+  c.fillStyle = '#87ceeb';
+  c.fillRect(w * 0.8, h * 0.35, w * 0.08, h * 0.15);
+
+  // Floor - Spotted Gum timber with planks
+  const floorGrad = c.createLinearGradient(0, h * 0.8, 0, h);
+  floorGrad.addColorStop(0, '#d4a574');
+  floorGrad.addColorStop(1, '#b8945a');
+  c.fillStyle = floorGrad;
+  c.fillRect(0, h * 0.8, w, h * 0.2);
+
+  // Floor plank lines perspective
+  c.strokeStyle = 'rgba(139, 105, 20, 0.3)';
+  c.lineWidth = 2;
+  for (let i = 0; i < 12; i++) {
+    const y = h * 0.8 + (h * 0.2 * i / 12);
+    const x1 = w * (0.3 - i * 0.015);
+    const x2 = w * (1 - i * 0.02);
+    c.beginPath(); c.moveTo(x1, y); c.lineTo(x2, y); c.stroke();
+  }
+
+  // Floor ambient light shadow
+  c.fillStyle = 'rgba(200, 160, 100, 0.2)';
+  c.beginPath();
+  c.moveTo(w * 0.3, h * 0.8);
+  c.lineTo(w, h * 0.8);
+  c.lineTo(w * 0.85, h);
+  c.lineTo(w * 0.2, h);
+  c.closePath();
+  c.fill();
+
+  // Kitchen island - Caesarstone countertop
+  c.fillStyle = '#d4d0c8';
+  c.beginPath();
+  c.moveTo(w * 0.25, h * 0.65);
+  c.lineTo(w * 0.5, h * 0.68);
+  c.lineTo(w * 0.52, h * 0.8);
+  c.lineTo(w * 0.22, h * 0.78);
+  c.closePath();
+  c.fill();
+
+  // Island top shadow
+  c.fillStyle = 'rgba(0, 0, 0, 0.15)';
+  c.beginPath();
+  c.moveTo(w * 0.25, h * 0.65);
+  c.lineTo(w * 0.5, h * 0.68);
+  c.lineTo(w * 0.48, h * 0.7);
+  c.lineTo(w * 0.23, h * 0.67);
+  c.closePath();
+  c.fill();
+
+  // Kitchen cabinets - timber veneer
+  c.fillStyle = '#8b6f47';
+  c.fillRect(w * 0.3, h * 0.48, w * 0.2, h * 0.17);
+  c.fillStyle = '#7a5e3a';
+  c.fillRect(w * 0.52, h * 0.5, w * 0.15, h * 0.15);
+
+  // Cabinet handles
+  c.strokeStyle = '#c0a060';
+  c.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    c.beginPath(); c.arc(w * 0.38 + i * 0.08, h * 0.55, 2, 0, Math.PI * 2); c.stroke();
+  }
+
+  // Pendant lights with warm glow
+  c.fillStyle = 'rgba(255, 200, 100, 0.4)';
+  c.beginPath(); c.arc(w * 0.35, h * 0.45, 35, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(w * 0.55, h * 0.48, 35, 0, Math.PI * 2); c.fill();
+
+  // Light fixtures
+  c.fillStyle = '#f4d03f';
+  c.beginPath(); c.arc(w * 0.35, h * 0.44, 8, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(w * 0.55, h * 0.47, 8, 0, Math.PI * 2); c.fill();
+
+  // Sofa - modern grey with cushion shading
+  c.fillStyle = '#888888';
+  c.fillRect(w * 0.05, h * 0.5, w * 0.2, h * 0.2);
+  c.fillStyle = '#777777';
+  c.fillRect(w * 0.06, h * 0.58, w * 0.18, h * 0.1);
+
+  // Sofa cushions
+  c.fillStyle = '#999999';
+  c.fillRect(w * 0.07, h * 0.52, w * 0.04, h * 0.14);
+  c.fillRect(w * 0.2, h * 0.52, w * 0.04, h * 0.14);
+
+  // Coffee table
+  c.fillStyle = '#8b6f47';
+  c.fillRect(w * 0.08, h * 0.65, w * 0.15, h * 0.08);
+  c.fillStyle = '#7a5e3a';
+  c.fillRect(w * 0.09, h * 0.7, w * 0.13, h * 0.02);
+
+  // Rug under furniture
+  c.fillStyle = 'rgba(139, 111, 71, 0.3)';
+  c.beginPath();
+  c.moveTo(w * 0.05, h * 0.5);
+  c.lineTo(w * 0.25, h * 0.48);
+  c.lineTo(w * 0.26, h * 0.76);
+  c.lineTo(w * 0.03, h * 0.78);
+  c.closePath();
+  c.fill();
+
+  // Artwork on wall
+  c.fillStyle = '#e0d5c8';
+  c.fillRect(w * 0.12, h * 0.32, w * 0.12, h * 0.12);
+  c.fillStyle = '#d4a574';
+  c.fillRect(w * 0.125, h * 0.325, w * 0.11, h * 0.11);
+  c.fillStyle = '#8B6914';
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      c.fillRect(w * 0.13 + i * w * 0.03, h * 0.34 + j * h * 0.032, w * 0.025, h * 0.025);
+    }
+  }
+
+  // Vanishing point
+  c.fillStyle = 'rgba(0, 0, 0, 0.03)';
+  c.beginPath();
+  c.moveTo(w * 0.3, h * 0.25);
+  c.lineTo(w * 0.32, h * 0.4);
+  c.lineTo(w * 0.3, h * 0.9);
+  c.closePath();
+  c.fill();
+
+  // Wall-ceiling junction shadow
+  c.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  c.fillRect(0, h * 0.23, w, 5);
+
+  // Info overlay
+  c.fillStyle = 'rgba(13, 27, 62, 0.85)';
+  c.fillRect(0, h - 50, w, 50);
+  c.fillStyle = 'white';
+  c.font = 'bold 14px Arial';
+  c.fillText('Modern Interior | One-Point Perspective', 15, h - 25);
+  c.font = '12px Arial';
+  c.fillStyle = '#aaa';
+  c.fillText('Spotted Gum Timber Floor | Warm Afternoon Light | Canvas 2D', 15, h - 8);
+}
+
+function showRender() {
+  const renderArea = document.getElementById('renderArea');
+  const svgContainer = document.getElementById('svgContainer');
+  const renderCanvas = document.getElementById('renderCanvas');
+  const aiRenderImg = document.getElementById('aiRenderImg');
+  const placeholder = document.getElementById('renderPlaceholder');
+  const loading = document.getElementById('renderLoading');
+
+  // Hide all render elements first
+  svgContainer.style.display = 'none';
+  renderCanvas.style.display = 'none';
+  aiRenderImg.style.display = 'none';
+  placeholder.style.display = 'none';
+  loading.style.display = 'none';
+
+  // Check if we have an AI-rendered image for this view mode
+  if (aiRenderedImages[currentViewMode]) {
+    aiRenderImg.src = aiRenderedImages[currentViewMode];
+    aiRenderImg.style.display = 'block';
+    return;
+  }
+
+  if (currentViewMode === 'floor') {
+    const svg = generateFloorPlanSVG(renderArea.clientWidth, renderArea.clientHeight);
+    svgContainer.innerHTML = svg;
+    svgContainer.style.display = 'block';
+  } else if (currentViewMode === 'ext') {
+    renderCanvas.style.display = 'block';
+    renderCanvas.width = renderArea.clientWidth;
+    renderCanvas.height = renderArea.clientHeight;
+    generateExteriorCanvas(renderCanvas);
+  } else if (currentViewMode === 'int') {
+    renderCanvas.style.display = 'block';
+    renderCanvas.width = renderArea.clientWidth;
+    renderCanvas.height = renderArea.clientHeight;
+    generateInteriorCanvas(renderCanvas);
+  }
+}
+
+// ===== STABILITY AI API INTEGRATION =====
+const STABILITY_API_KEY = ''; // API key removed for free distribution
+const STABILITY_API_HOST = 'https://api.stability.ai';
+
+const AI_PROMPTS = {
+  floor: `Ultra-detailed professional architectural floor plan, technical drawing style, crisp black wall outlines on white background, accurate room proportions, furniture layout symbols, dimension annotations with arrows, room area labels in square meters, north arrow indicator, scale bar 1:100, door swing arcs, window symbols as parallel lines, hatching for wet areas. Clean vector-like precision, AutoCAD presentation quality, A3 sheet format.`,
+  ext: `Photorealistic exterior architectural visualization, modern Australian residential home, two-storey contemporary design. Colorbond metal roof in Monument grey, rendered white brick facade with natural timber battens, large floor-to-ceiling glazing panels, concrete aggregate driveway, native Australian landscaping with Kangaroo Paw and Lomandra, established eucalyptus tree, manicured buffalo lawn. Golden hour warm directional sunlight, long shadows, clear sky with scattered cirrus clouds. Shot from eye-level 3/4 perspective angle, f/2.8 depth of field, Canon EOS R5 style. V-Ray physically based rendering, ray-traced global illumination, 8K photorealistic quality, Architectural Digest cover photo style.`,
+  int: `Photorealistic interior architectural visualization of modern Australian open-plan living space. Engineered spotted gum timber flooring, white plasterboard walls, 2.7m ceiling height. Kitchen island with 40mm Caesarstone Statuario Maximus benchtop, matte black tapware, Miele integrated appliances, timber veneer cabinetry. Living area with contemporary grey linen modular sofa, Muuto pendant lights, sheer curtain diffused natural light through full-height windows. Warm afternoon sun creating soft shadows, ambient bounce light, slight depth of field blur. Interior design photography, Dwell Magazine style, V-Ray rendering, 8K resolution, physically based materials with accurate specular and roughness maps.`,
+};
+
+async function generateAIRender() {
+  const drawCanvas = document.getElementById('drawCanvas');
+  if (!drawCanvas || drawCanvas.width === 0) return;
+
+  // Check if canvas has any drawing content (not just grid)
+  const imageData = drawCanvas.getContext('2d').getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+  let hasContent = false;
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    const r = imageData.data[i], g = imageData.data[i+1], b = imageData.data[i+2];
+    // Skip near-white pixels (grid lines and background)
+    if (r < 200 || g < 200 || b < 200) { hasContent = true; break; }
+  }
+  if (!hasContent) return;
+
+  const svgContainer = document.getElementById('svgContainer');
+  const renderCanvas = document.getElementById('renderCanvas');
+  const aiRenderImg = document.getElementById('aiRenderImg');
+  const placeholder = document.getElementById('renderPlaceholder');
+  const loading = document.getElementById('renderLoading');
+
+  // Show loading state
+  svgContainer.style.display = 'none';
+  renderCanvas.style.display = 'none';
+  aiRenderImg.style.display = 'none';
+  placeholder.style.display = 'none';
+  loading.style.display = 'block';
+
+  // Update status bar + disable generate button during generation
+  document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
+  document.getElementById('aiStatus').textContent = '⏳ Generating... (Stability AI ControlNet)';
+  const genBtn = document.getElementById('generateBtn');
+  if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.6'; }
+  document.getElementById('generateBtnIcon').textContent = '⏳';
+  document.getElementById('generateBtnText').textContent = 'Generating...';
+
+  try {
+    // Get sketch as base64 PNG
+    const dataUrl = drawCanvas.toDataURL('image/png');
+    const base64 = dataUrl.split(',')[1];
+    const imageBuffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+
+    // Use custom prompt from input box if provided, otherwise use default
+    const customPrompt = (document.getElementById('aiPromptInput')?.value || '').trim();
+    const basePrompt = AI_PROMPTS[currentViewMode] || AI_PROMPTS.ext;
+    const prompt = customPrompt ? `${customPrompt}. ${basePrompt}` : basePrompt;
+    const negativePrompt = 'low quality, blurry, distorted, deformed, cartoon, anime, watermark, text overlay, ugly, amateur, poorly drawn, emoji, clipart, gradient background, sketch, wireframe, unrealistic proportions, floating objects, broken geometry, oversaturated';
+    const strength = currentViewMode === 'floor' ? 0.5 : 0.65;
+
+    // Try ControlNet sketch endpoint first
+    const formData = new FormData();
+    formData.append('image', new Blob([imageBuffer], { type: 'image/png' }), 'sketch.png');
+    formData.append('prompt', prompt);
+    formData.append('control_strength', strength.toString());
+    formData.append('output_format', 'png');
+
+    let response = await fetch(`${STABILITY_API_HOST}/v2beta/stable-image/control/sketch`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${STABILITY_API_KEY}`,
+        'Accept': 'application/json',
+      },
+      body: formData,
+    });
+
+    // Fallback to img2img if ControlNet 404s
+    if (response.status === 404) {
+      const formData2 = new FormData();
+      formData2.append('image', new Blob([imageBuffer], { type: 'image/png' }), 'sketch.png');
+      formData2.append('prompt', prompt);
+      formData2.append('negative_prompt', negativePrompt);
+      formData2.append('mode', 'image-to-image');
+      formData2.append('strength', strength.toString());
+      formData2.append('output_format', 'png');
+
+      response = await fetch(`${STABILITY_API_HOST}/v2beta/stable-image/generate/core`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${STABILITY_API_KEY}`,
+          'Accept': 'application/json',
+        },
+        body: formData2,
+      });
+    }
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`API ${response.status}: ${errText}`);
+    }
+
+    const result = await response.json();
+    let imgBase64 = null;
+
+    if (result.image) {
+      imgBase64 = result.image;
+    } else if (result.artifacts && result.artifacts[0]) {
+      imgBase64 = result.artifacts[0].base64;
+    }
+
+    if (imgBase64) {
+      aiRenderedImages[currentViewMode] = `data:image/png;base64,${imgBase64}`;
+      loading.style.display = 'none';
+      aiRenderImg.src = aiRenderedImages[currentViewMode];
+      aiRenderImg.style.display = 'block';
+      renderCount++;
+    } else {
+      throw new Error('No image in API response');
+    }
+  } catch (err) {
+    console.error('Stability AI error:', err);
+    loading.style.display = 'none';
+    // Fall back to Canvas 2D render
+    showRender();
+    document.getElementById('aiStatus').textContent = `⚠️ AI Error: ${err.message.substring(0, 50)}`;
+  } finally {
+    document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-green-500';
+    document.getElementById('aiStatus').textContent = `🤖 AI Render Complete — Generated ${renderCount} images`;
+    const genBtn = document.getElementById('generateBtn');
+    if (genBtn) { genBtn.disabled = false; genBtn.style.opacity = '1'; }
+    document.getElementById('generateBtnIcon').textContent = '✨';
+    document.getElementById('generateBtnText').textContent = 'Generate';
+  }
+}
+
+// ===== QUOTE TOOL — AArch CALIBRATED (170 Scenarios, March 2026, Sydney Metro) =====
+// Rates: AUD inc GST | All-inclusive (Prelims + Shell + Fitout + Ext + Cont + 20% Margin + 10% GST)
+// Reference: 200m² internal, standard external — sizes scale automatically
+
+const QUALITY_BANDS = {
+  q1: { label: 'Q1 — Basic / Project Home',   qRange:'1', rateLow: 1604, rateHigh: 1691, renoRateLow: 480,  renoRateHigh: 700  },
+  q2: { label: 'Q2 — Standard Project Home',  qRange:'2', rateLow: 2302, rateHigh: 2435, renoRateLow: 680,  renoRateHigh: 950  },
+  q3: { label: 'Q3 — Standard+ / Volume',     qRange:'3', rateLow: 2966, rateHigh: 3136, renoRateLow: 850,  renoRateHigh: 1150 },
+  q4: { label: 'Q4 — Mid-Range Custom',        qRange:'4', rateLow: 3742, rateHigh: 3961, renoRateLow: 1050, renoRateHigh: 1400 },
+  q5: { label: 'Q5 — Mid-High Custom',         qRange:'5', rateLow: 4353, rateHigh: 4606, renoRateLow: 1250, renoRateHigh: 1600 },
+  q6: { label: 'Q6 — Quality Custom Home',     qRange:'6', rateLow: 5118, rateHigh: 5409, renoRateLow: 1450, renoRateHigh: 1850 },
+  q7: { label: 'Q7 — High-End Custom',         qRange:'7', rateLow: 5695, rateHigh: 6027, renoRateLow: 1600, renoRateHigh: 2050 },
+  q8: { label: 'Q8 — Premium Architect',       qRange:'8', rateLow: 6360, rateHigh: 6731, renoRateLow: 1800, renoRateHigh: 2250 },
+  q9: { label: 'Q9 — Luxury / Architectural',  qRange:'9', rateLow: 6958, rateHigh: 7364, renoRateLow: 2000, renoRateHigh: 2800 },
+};
+
+// Site factors — AArch-calibrated (low range unchanged; high range expands for difficult sites)
+const SITE_FACTORS = {
+  flat_good:      { label: 'Flat + Good Access (Baseline)',             factorLow: 1.000, factorHigh: 1.000 },
+  med_slope_avg:  { label: 'Moderate Slope (10-25°) + Average Access',  factorLow: 1.000, factorHigh: 1.090 },
+  steep_difficult:{ label: 'Very Steep (>25°) + Difficult Access',      factorLow: 1.000, factorHigh: 1.221 },
+};
+
+// Market factors — AArch-calibrated (170 scenarios)
+// Recession: high end collapses to = low end (uncertainty narrows, no price reduction)
+// Boom: high end increases ~6% above normal (refined from 100-scenario data)
+const MARKET_FACTORS = {
+  slow:   { label: 'Recession / Slow',  factorLow: 1.000, factorHigh: 1.000 },
+  normal: { label: 'Normal Market',     factorLow: 1.000, factorHigh: 1.000 },
+  boom:   { label: 'Boom Market',       factorLow: 1.000, factorHigh: 1.062 },
+};
+
+// Location factors — Adelaide ~25% lower than Sydney (MBSA + hipages data)
+// Quality-dependent: Q1-Q3 project homes see larger discount (0.70), Q7-Q9 luxury less (0.80)
+const LOCATION_FACTORS = {
+  sydney:   { label: 'Sydney (NSW)',   factor: 1.000 },
+  adelaide: { label: 'Adelaide (SA)',  factor: 0.750 },
+};
+function locationFactor(locationKey, qScore) {
+  if (locationKey === 'adelaide') {
+    if (qScore <= 3) return 0.70;
+    if (qScore <= 6) return 0.75;
+    return 0.80;
+  }
+  return 1.0;
+}
+
+// Pool: quality-dependent rate (calibrated from AArch scenarios)
+// Q1–Q3: $3,100–$3,420/m², Q4–Q6: $3,600–$3,900/m², Q7–Q9: $4,500–$5,400/m²
+function poolRate(qScore) {
+  if (qScore <= 3) return { low: 3100, high: 3420 };
+  if (qScore <= 6) return { low: 3600, high: 3900 };
+  return { low: 4500, high: 5400 };
+}
+
+// AArch reference scenarios (key examples from 170-scenario dataset)
+const AARCH_SCENARIOS = [
+  { id:'S01',  q:1, area:150,  ext:30,  slope:'Flat',        market:'Normal',   low:261272,   high:274363,   rL:1742,  rH:1829 },
+  { id:'S09',  q:1, area:200,  ext:50,  slope:'Flat',        market:'Normal',   low:320727,   high:338181,   rL:1604,  rH:1691 },
+  { id:'S071', q:1, area:60,   ext:12,  slope:'Flat',        market:'Normal',   low:163090,   high:169636,   rL:2718,  rH:2827 },
+  { id:'S10',  q:2, area:200,  ext:50,  slope:'Flat',        market:'Normal',   low:460363,   high:487090,   rL:2302,  rH:2436 },
+  { id:'S17',  q:5, area:200,  ext:50,  slope:'Flat',        market:'Normal',   low:870545,   high:921272,   rL:4353,  rH:4606 },
+  { id:'S078', q:5, area:110,  ext:22,  slope:'Flat',        market:'Normal',   low:570545,   high:600000,   rL:5187,  rH:5455 },
+  { id:'S098', q:9, area:650,  ext:150, slope:'Flat',        market:'Normal',   low:3577090,  high:3811090,  rL:5503,  rH:5863 },
+  { id:'S026', q:5, area:180,  ext:40,  slope:'Sig Slope',   market:'Normal',   low:798000,   high:870181,   rL:4433,  rH:4834 },
+  { id:'S029', q:5, area:180,  ext:40,  slope:'Very Steep',  market:'Normal',   low:798000,   high:975272,   rL:4433,  rH:5418 },
+  { id:'S136', q:5, area:200,  ext:50,  slope:'Flat',        market:'Boom',     low:870545,   high:978545,   rL:4353,  rH:4893 },
+  { id:'S20',  q:7, area:200,  ext:50,  slope:'Flat',        market:'Normal',   low:1138909,  high:1205454,  rL:5695,  rH:6027 },
+  { id:'S22',  q:8, area:200,  ext:50,  slope:'Flat',        market:'Normal',   low:1272000,  high:1346181,  rL:6360,  rH:6731 },
+  { id:'S40',  q:9, area:180,  ext:40,  slope:'Flat',        market:'Normal',   low:1286727,  high:1360363,  rL:7148,  rH:7558 },
+];
+
+function _fmt(n) { return '$' + Math.round(n).toLocaleString('en-AU'); }
+function _fmtRate(n) { return '$' + Math.round(n).toLocaleString('en-AU') + '/m²'; }
+
+function updateQuote() {
+  const buildType    = document.getElementById('buildType').value;
+  const qualityKey   = document.getElementById('qualityLevel').value;
+  const siteKey      = document.getElementById('siteCondition').value;
+  const mktKey       = document.getElementById('marketCondition').value;
+  const locationKey  = document.getElementById('locationSelect').value;
+  const userMargin   = parseFloat(document.getElementById('margin').value) || 20;
+
+  document.getElementById('newBuildFields').style.display = buildType === 'new_build' ? 'block' : 'none';
+  document.getElementById('aaFields').style.display       = buildType === 'addition'  ? 'block' : 'none';
+  document.getElementById('renoFields').style.display     = (buildType === 'reno_only' || buildType === 'bathroom' || buildType === 'kitchen') ? 'block' : 'none';
+
+  const Q    = QUALITY_BANDS[qualityKey] || QUALITY_BANDS['q5'];
+  const site = SITE_FACTORS[siteKey];
+  const mkt  = MARKET_FACTORS[mktKey];
+  const qScoreEarly = parseInt(Q.qRange) || 5;
+  const locFactor   = locationFactor(locationKey, qScoreEarly);
+
+  // AArch default contingency margin is ~20%. Adjust for user's specified margin:
+  // total_adjusted = total_aarch × (1 + userMargin/100) / 1.20
+  const AARCH_MARGIN = 0.20;
+  const marginAdj = (1 + userMargin / 100) / (1 + AARCH_MARGIN);
+
+  // Area size factor: larger homes have lower rate/m² (AArch-calibrated, 170 scenarios)
+  // Piecewise: small homes (<200m²) scale faster (exp 0.32); large homes slower (exp 0.22)
+  // E.g.: 60m² → +56%, 110m² → +19%, 150m² → +7%, 200m² → 1.00x, 400m² → −14%, 650m² → −22%
+  function sizeFactor(area) {
+    const a = Math.max(area, 50);
+    return a < 200
+      ? Math.pow(200 / a, 0.32)
+      : Math.pow(200 / a, 0.22);
+  }
+
+  // External & siteworks combined rate (decking, paving, landscaping, driveway)
+  // AArch: ext_l ≈ 13% of internal all-incl rate × (ext+drive area)/internal_area
+  // Simplified: ~$262/m² at Q1, ~$488/m² at Q5, ~$862/m² at Q8 for combined ext+drive
+  function extRate(rateLow, rateHigh) {
+    return { low: rateLow * 0.163, high: rateHigh * 0.163 };
+  }
+
+  let totalLow, totalHigh, breakdown = [], refArea = 1;
+
+  if (buildType === 'new_build') {
+    const intArea   = parseFloat(document.getElementById('newInternalArea').value) || 0;
+    const extArea   = parseFloat(document.getElementById('newExternalArea').value) || 0;
+    const driveArea = parseFloat(document.getElementById('driveArea').value) || 0;
+    const poolArea  = parseFloat(document.getElementById('poolArea').value) || 0;
+    refArea = intArea || 1;
+
+    const sf = sizeFactor(intArea);
+    const intRateLow  = Q.rateLow  * sf * marginAdj;
+    const intRateHigh = Q.rateHigh * sf * marginAdj;
+    const intCostLow  = intArea * intRateLow;
+    const intCostHigh = intArea * intRateHigh;
+
+    // IMPORTANT: AArch rate×intArea is ALL-INCLUSIVE (already contains typical external
+    // works proportional to home size: ~40% of intArea in combined ext+driveway).
+    // Only add extra cost for external area ABOVE the standard proportion.
+    const stdExtArea   = intArea * 0.40;  // typical ext+drv for this home size
+    const userExtTotal = extArea + driveArea;
+    const extraExt     = Math.max(0, userExtTotal - stdExtArea);
+    const eR = extRate(Q.rateLow * sf, Q.rateHigh * sf);
+    const extraExtCostLow  = extraExt * eR.low  * marginAdj;
+    const extraExtCostHigh = extraExt * eR.high * marginAdj;
+
+    // Pool: quality-dependent rate (Q1–Q3: $3.1k, Q4–Q6: $3.6k, Q7–Q9: $4.5k/m²)
+    const pR = poolRate(parseInt(Q.qRange) || 5);
+    const poolCostLow  = poolArea * pR.low;
+    const poolCostHigh = poolArea * pR.high;
+
+    // Apply site and market factors
+    totalLow  = (intCostLow  + extraExtCostLow  + poolCostLow)  * site.factorLow  * mkt.factorLow  * locFactor;
+    totalHigh = (intCostHigh + extraExtCostHigh + poolCostHigh) * site.factorHigh * mkt.factorHigh * locFactor;
+
+    // AArch-style component breakdown (from calibrated proportions)
+    // Component ratios as % of pre-GST total, quality-scaled:
+    // Shell% increases with quality (Q1: ~50%, Q9: ~63%); Fitout% decreases (Q1: ~29%, Q9: ~14%)
+    const qScore = parseInt(Q.qRange) || 5;
+    const shellRatio  = 0.503 + (qScore - 1) * 0.016;  // 50.3%–62.7%
+    const fitoutRatio = 0.292 - (qScore - 1) * 0.018;  // 29.2%–14.8%
+    const prelimRatio = 0.104;   // ~10.4% (constant across quality)
+    const contRatio   = 0.014;   // ~1.4% contingency
+
+    function componentBreakdown(total) {
+      const preGST    = total / 1.10;
+      const preMargin = preGST / (1 + userMargin / 100);
+      const prelim = preMargin * prelimRatio;
+      const shell  = preMargin * shellRatio;
+      const fitout = preMargin * fitoutRatio;
+      const ext    = preMargin * (1 - prelimRatio - shellRatio - fitoutRatio - contRatio);
+      const cont   = preMargin * contRatio;
+      const margin = preMargin * (userMargin / 100);
+      const gst    = preGST * 0.10;
+      return { prelim, shell, fitout, ext, cont, margin, gst };
+    }
+
+    const bdL = componentBreakdown(totalLow);
+    const bdH = componentBreakdown(totalHigh);
+
+    breakdown = [
+      { item: 'Preliminary Works',                  low: bdL.prelim, high: bdH.prelim },
+      { item: 'Building Shell',                     low: bdL.shell,  high: bdH.shell  },
+      { item: 'Building Fit-out',                   low: bdL.fitout, high: bdH.fitout },
+      { item: 'External & Siteworks',               low: bdL.ext,    high: bdH.ext    },
+      { item: 'Contingency (~1.4%)',                low: bdL.cont,   high: bdH.cont   },
+      { item: `Contingency & Margin (${userMargin}%)`,  low: bdL.margin, high: bdH.margin },
+      { item: 'GST (10%)',                          low: bdL.gst,    high: bdH.gst    },
+    ];
+    if (poolArea > 0) {
+      breakdown.splice(3, 0, { item: `Pool (${poolArea}m²)`, low: poolCostLow, high: poolCostHigh });
+    }
+
+  } else if (buildType === 'addition') {
+    const newArea  = parseFloat(document.getElementById('aaNewArea').value)  || 0;
+    const renoArea = parseFloat(document.getElementById('aaRenoArea').value) || 0;
+    refArea = (newArea + renoArea) || 1;
+
+    const newCostLow   = newArea  * Q.rateLow  * marginAdj;
+    const newCostHigh  = newArea  * Q.rateHigh * marginAdj;
+    const renoCostLow  = renoArea * Q.renoRateLow  * marginAdj;
+    const renoCostHigh = renoArea * Q.renoRateHigh * marginAdj;
+
+    totalLow  = (newCostLow  + renoCostLow)  * site.factorLow  * mkt.factorLow  * locFactor;
+    totalHigh = (newCostHigh + renoCostHigh) * site.factorHigh * mkt.factorHigh * locFactor;
+
+    breakdown = [
+      { item: `New Build Work (${newArea}m²)`,  low: newCostLow  * site.factorLow  * mkt.factorLow,
+                                                high: newCostHigh * site.factorHigh * mkt.factorHigh },
+      { item: `Renovation Work (${renoArea}m²)`, low: renoCostLow  * site.factorLow  * mkt.factorLow,
+                                                  high: renoCostHigh * site.factorHigh * mkt.factorHigh },
+    ];
+
+  } else {
+    const renoArea = parseFloat(document.getElementById('renoArea').value) || 0;
+    refArea = renoArea || 1;
+
+    const renoCostLow  = renoArea * Q.renoRateLow  * marginAdj;
+    const renoCostHigh = renoArea * Q.renoRateHigh * marginAdj;
+
+    totalLow  = renoCostLow  * site.factorLow  * mkt.factorLow  * locFactor;
+    totalHigh = renoCostHigh * site.factorHigh * mkt.factorHigh * locFactor;
+
+    const label = buildType === 'bathroom' ? 'Bathroom Renovation' :
+                  buildType === 'kitchen'  ? 'Kitchen Renovation'  : 'Renovation Works';
+    breakdown = [
+      { item: label,      low: totalLow  / 1.10, high: totalHigh / 1.10 },
+      { item: 'GST (10%)', low: totalLow * 0.10 / 1.10, high: totalHigh * 0.10 / 1.10 },
+    ];
+  }
+
+  const rateL = Math.round(totalLow  / refArea);
+  const rateH = Math.round(totalHigh / refArea);
+
+  // ── Render ──
+  let html = `
+    <div class="space-y-5">
+
+      <!-- Total Cost Hero -->
+      <div style="background:linear-gradient(135deg,#0d1b3e,#1a2d5e)" class="rounded-xl p-6 text-white shadow-lg">
+        <div class="text-xs font-semibold opacity-60 tracking-widest mb-1">TOTAL PROJECT COST (Inc. GST)</div>
+        <div class="text-4xl font-black leading-tight mb-1">${_fmt(totalLow)} — ${_fmt(totalHigh)}</div>
+        <div class="text-sm opacity-80">${_fmtRate(rateL)} — ${_fmtRate(rateH)} internal area</div>
+        <div class="mt-3 text-xs opacity-60">
+          ${LOCATION_FACTORS[locationKey].label} | ${Q.label} | ${site.label} | ${mkt.label} | ${userMargin}% margin${locFactor < 1 ? ' | Location Factor: ' + (locFactor*100).toFixed(0) + '%' : ''}
+        </div>
+      </div>
+
+      <!-- AArch-Style Breakdown -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-gray-50 px-4 py-3 border-b">
+          <h3 class="font-bold text-sm text-gray-800">Cost Breakdown <span class="text-xs text-gray-400 font-normal ml-1">— AArch component structure</span></h3>
+        </div>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-[#1a2d5e] text-white text-xs">
+              <th class="text-left px-4 py-2 font-semibold">Item</th>
+              <th class="text-right px-4 py-2 font-semibold">Low (AUD)</th>
+              <th class="text-right px-4 py-2 font-semibold">High (AUD)</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+
+  breakdown.forEach((line, i) => {
+    const isTotalRow = line.item.includes('GST') && i === breakdown.length - 1;
+    const rowBg = isTotalRow ? 'bg-[#f0f4ff] font-bold border-t-2 border-[#1a2d5e]' : (i % 2 === 0 ? 'bg-white' : 'bg-gray-50');
+    html += `<tr class="${rowBg} border-t border-gray-100">
+      <td class="px-4 py-2 text-gray-700">${line.item}</td>
+      <td class="text-right px-4 py-2 tabular-nums">${_fmt(line.low)}</td>
+      <td class="text-right px-4 py-2 tabular-nums">${_fmt(line.high)}</td>
+    </tr>`;
+  });
+
+  // Total row
+  html += `<tr class="bg-[#1a2d5e] text-white font-black border-t-2 border-[#1a2d5e]">
+    <td class="px-4 py-3">TOTAL (inc GST)</td>
+    <td class="text-right px-4 py-3 tabular-nums text-lg">${_fmt(totalLow)}</td>
+    <td class="text-right px-4 py-3 tabular-nums text-lg">${_fmt(totalHigh)}</td>
+  </tr>`;
+
+  html += `</tbody></table></div>`;
+
+  // AArch Reference Scenarios
+  html += `
+    <div class="bg-blue-50 border border-blue-200 rounded-xl overflow-hidden">
+      <div class="px-4 py-2 bg-blue-100 border-b border-blue-200">
+        <div class="text-xs font-bold text-blue-900">AArch Reference Benchmarks (170 scenarios, Mar 2026, Sydney baseline)</div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead><tr class="bg-blue-100 text-blue-900">
+            <th class="px-3 py-1.5 text-left">ID</th>
+            <th class="px-3 py-1.5 text-center">Q</th>
+            <th class="px-3 py-1.5 text-center">Area</th>
+            <th class="px-3 py-1.5 text-left">Conditions</th>
+            <th class="px-3 py-1.5 text-right">Low</th>
+            <th class="px-3 py-1.5 text-right">High</th>
+            <th class="px-3 py-1.5 text-right">$/m²</th>
+          </tr></thead>
+          <tbody>
+  `;
+
+  const currentQ = parseInt((QUALITY_BANDS[qualityKey]||QUALITY_BANDS['q5']).qRange);
+  AARCH_SCENARIOS.forEach((s, i) => {
+    const isMatch = Math.abs(s.q - currentQ) <= 1;
+    const rowBg = isMatch ? 'bg-white border-l-4 border-green-500' : (i%2===0?'bg-white/60':'bg-blue-50/40');
+    html += `<tr class="${rowBg} border-t border-blue-100">
+      <td class="px-3 py-1.5 font-semibold text-gray-700">${s.id}</td>
+      <td class="px-3 py-1.5 text-center">${s.q}</td>
+      <td class="px-3 py-1.5 text-center">${s.area}m²</td>
+      <td class="px-3 py-1.5 text-gray-600">${s.slope} / ${s.market}</td>
+      <td class="px-3 py-1.5 text-right tabular-nums">${_fmt(s.low)}</td>
+      <td class="px-3 py-1.5 text-right tabular-nums">${_fmt(s.high)}</td>
+      <td class="px-3 py-1.5 text-right tabular-nums text-gray-500">${_fmtRate(s.rL)}–${_fmtRate(s.rH)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div></div>`;
+
+  // Quality Scale Reference
+  html += `
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="bg-gray-50 px-4 py-2 border-b">
+        <div class="text-xs font-bold text-gray-700">AArch Quality Scale Reference (Sydney 2026)</div>
+      </div>
+      <table class="w-full text-xs">
+        <thead><tr class="bg-gray-100 text-gray-600">
+          <th class="px-3 py-1.5 text-center">Score</th>
+          <th class="px-3 py-1.5 text-right">AArch Rate</th>
+          <th class="px-3 py-1.5 text-right">All-incl @200m²</th>
+          <th class="px-3 py-1.5 text-left">Description</th>
+        </tr></thead>
+        <tbody>
+  `;
+  const qScaleData = [
+    [1, 425, '1,604–1,691', 'Basic / Project Home — minimum spec'],
+    [2, 650, '2,302–2,435', 'Standard — slightly above minimum'],
+    [3, 875, '2,966–3,136', 'Standard+ — typical volume build'],
+    [4, 1100,'3,742–3,961', 'Mid-Range — upgraded project home'],
+    [5, 1325,'4,353–4,606', 'Mid-High — custom architect standard'],
+    [6, 1550,'5,118–5,409', 'Quality — quality custom home'],
+    [7, 1775,'5,695–6,027', 'High-End — premium custom build'],
+    [8, 2000,'6,360–6,731', 'Premium — architect-designed'],
+    [9, 2225,'6,958–7,364', 'Luxury / Architectural — top spec'],
+  ];
+  qScaleData.forEach(([score, rate, allinc, desc], i) => {
+    const isSelected = score === currentQ;
+    const rowBg = isSelected ? 'bg-indigo-50 border-l-4 border-indigo-500 font-semibold' : (i%2===0?'bg-white':'bg-gray-50');
+    html += `<tr class="${rowBg} border-t border-gray-100">
+      <td class="px-3 py-1.5 text-center font-bold text-gray-700">Q${score}</td>
+      <td class="px-3 py-1.5 text-right tabular-nums">$${rate}/m²</td>
+      <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">$${allinc}/m²</td>
+      <td class="px-3 py-1.5 text-gray-600">${desc}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // Trial upgrade banner
+  html += `
+    <div class="bg-blue-600 text-white rounded-xl p-4 text-center">
+      <div class="text-sm font-bold mb-1">FREE TRIAL VERSION</div>
+      <div class="text-xs opacity-90">Upgrade to <strong>Pro ($49/mo)</strong> for: no watermark, custom logo on PDF, monthly data updates, priority support</div>
+      <a href="https://freshvision.gumroad.com/l/ausbuild-pro" target="_blank" class="inline-block mt-2 px-4 py-1.5 bg-white text-blue-700 rounded-full text-xs font-bold hover:bg-blue-50">Upgrade Now</a>
+    </div>
+  `;
+
+  // Disclaimer
+  html += `
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900">
+      <strong>Indicative Estimate Only</strong> — Calibrated from 170 AArch Building Costing Calculator scenarios (March 2026, Sydney Metro).
+      Adelaide rates derived using MBSA + hipages location factor (~75% of Sydney baseline, quality-adjusted).
+      Rates assume typical site access and standard construction. Actual costs will vary based on site-specific conditions,
+      council requirements, material selections, and contractor availability. Engage a registered Quantity Surveyor for contract-stage pricing.
+      <span class="block mt-1 text-amber-700">Source: aaarchitect.com.au | MBSA sabuildingdirectory.com.au</span>
+    </div>
+  </div>`;
+
+  document.getElementById('quoteResults').innerHTML = html;
+}
+
+// Initial render setup
+setTimeout(() => {
+  resizeCanvas();
+  window.addEventListener('resize', () => setTimeout(resizeCanvas, 50));
+}, 100);
+</script>
+</body>
+</html>
