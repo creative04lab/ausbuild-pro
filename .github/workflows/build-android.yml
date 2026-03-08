@@ -18,21 +18,31 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.2
+
       - name: Create Android project
         run: |
           mkdir -p app/src/main/java/com/ausbuild/pro
           mkdir -p app/src/main/res/{layout,values,drawable,mipmap-hdpi}
           mkdir -p app/src/main/assets
+          mkdir -p gradle/wrapper
+
+      - name: Create Gradle wrapper
+        run: |
+          gradle wrapper --gradle-version 8.2
 
       - name: Prepare mobile HTML
         run: |
           cp AusBuild-Pro-V4-Free.html app/src/main/assets/index.html
           python3 -c "
           with open('app/src/main/assets/index.html','r') as f: html=f.read()
-          html=html.replace('<script src=\"https://cdn.tailwindcss.com\"></script>','<script src=\"https://cdn.tailwindcss.com\"></script>\n<script src=\"https://js.puter.com/v2/\"></script>')
+          html=html.replace('<script src=\\"https://cdn.tailwindcss.com\\"></script>','<script src=\\"https://cdn.tailwindcss.com\\"></script>\\n<script src=\\"https://js.puter.com/v2/\\"></script>')
           html=html.replace('width=device-width, initial-scale=1.0','width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
           css='@media(max-width:768px){nav{flex-wrap:wrap;height:auto!important;padding:8px 12px!important;gap:6px}nav>div:first-child{width:100%%;text-align:center}#nav-tabs{width:100%%;display:flex;justify-content:center;gap:4px;overflow-x:auto}#nav-tabs .tab-btn{padding:6px 12px!important;font-size:11px!important;white-space:nowrap}nav>div:last-child{display:none}#tab-calc>div,#tab-design>div,#tab-quote>div{flex-direction:column!important;overflow-y:auto!important}body{overflow:auto!important;height:auto!important;min-height:100vh}select,input,button{font-size:14px!important;min-height:36px}}*{-webkit-tap-highlight-color:transparent}'
-          html=html.replace('</style>',css+'\n</style>')
+          html=html.replace('</style>',css+'\\n</style>')
           html=html.replace('h-screen flex flex-col overflow-hidden','min-h-screen flex flex-col')
           with open('app/src/main/assets/index.html','w') as f: f.write(html)
           print('HTML modified successfully')
@@ -40,7 +50,7 @@ jobs:
 
       - name: Create AndroidManifest.xml
         run: |
-          cat > app/src/main/AndroidManifest.xml << 'EOF'
+          cat > app/src/main/AndroidManifest.xml << 'XMLEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.ausbuild.pro">
             <uses-permission android:name="android.permission.INTERNET"/>
@@ -57,11 +67,11 @@ jobs:
               </activity>
             </application>
           </manifest>
-          EOF
+          XMLEOF
 
       - name: Create MainActivity.java
         run: |
-          cat > app/src/main/java/com/ausbuild/pro/MainActivity.java << 'EOF'
+          cat > app/src/main/java/com/ausbuild/pro/MainActivity.java << 'JAVAEOF'
           package com.ausbuild.pro;
           import android.app.Activity;
           import android.graphics.Color;
@@ -90,15 +100,15 @@ jobs:
             }
             @Override public void onBackPressed(){if(webView!=null&&webView.canGoBack())webView.goBack();else super.onBackPressed();}
           }
-          EOF
+          JAVAEOF
 
       - name: Create resource files
         run: |
-          cat > app/src/main/res/values/strings.xml << 'EOF'
+          cat > app/src/main/res/values/strings.xml << 'XMLEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources><string name="app_name">AusBuild Pro V4</string></resources>
-          EOF
-          cat > app/src/main/res/values/themes.xml << 'EOF'
+          XMLEOF
+          cat > app/src/main/res/values/themes.xml << 'XMLEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
             <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
@@ -106,29 +116,29 @@ jobs:
               <item name="android:navigationBarColor">#0d1b3e</item>
             </style>
           </resources>
-          EOF
+          XMLEOF
 
       - name: Create Gradle files
         run: |
-          cat > build.gradle << 'EOF'
+          cat > build.gradle << 'GEOF'
           buildscript {
             repositories { google(); mavenCentral() }
-            dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
+            dependencies { classpath "com.android.tools.build:gradle:8.1.4" }
           }
           allprojects { repositories { google(); mavenCentral() } }
-          EOF
-          cat > settings.gradle << 'EOF'
-          rootProject.name = 'AusBuildProV4'
-          include ':app'
-          EOF
-          cat > gradle.properties << 'EOF'
+          GEOF
+          cat > settings.gradle << 'GEOF'
+          rootProject.name = "AusBuildProV4"
+          include ":app"
+          GEOF
+          cat > gradle.properties << 'GEOF'
           org.gradle.jvmargs=-Xmx2048m
           android.useAndroidX=false
-          EOF
-          cat > app/build.gradle << 'EOF'
-          plugins { id 'com.android.application' }
+          GEOF
+          cat > app/build.gradle << 'GEOF'
+          plugins { id "com.android.application" }
           android {
-            namespace 'com.ausbuild.pro'
+            namespace "com.ausbuild.pro"
             compileSdk 34
             defaultConfig {
               applicationId "com.ausbuild.pro"
@@ -143,12 +153,11 @@ jobs:
               targetCompatibility JavaVersion.VERSION_11
             }
           }
-          EOF
+          GEOF
 
       - name: Build APK
         run: |
-          gradle wrapper --gradle-version 8.2
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
