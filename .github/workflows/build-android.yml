@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 
-jobs:
+jobs:h
   build:
     runs-on: ubuntu-latest
     steps:
@@ -44,6 +44,22 @@ jobs:
           html=html.replace('h-screen flex flex-col overflow-hidden','min-h-screen flex flex-col')
           with open('app/src/main/assets/index.html','w') as f: f.write(html)
           print('HTML modified successfully')
+
+      - name: Strip trial elements for Pro version
+        run: |
+          python3 -c "
+          import re
+          with open('app/src/main/assets/index.html','r') as f: html=f.read()
+          html=re.sub(r'/*s*Trial Watermarks**/.*?(?=
+s*/*|</style>)','',html,flags=re.DOTALL)
+          html=re.sub(r'<!--s*TRIAL WATERMARKs*-->.*?</div>s*<div class=.trial-banner.>.*?</div>','',html,flags=re.DOTALL)
+          html=re.sub(r'<span[^>]*bg-yellow-500[^>]*>FREE TRIAL</span>','',html)
+          html=re.sub(r'<div class=.trial-banner.>.*?</div>','',html,flags=re.DOTALL)
+          html=html.replace('FREE TRIAL VERSION','PRO VERSION')
+          html=html.replace('Upgrade to <strong>Pro ($49/mo)</strong> for: no watermark, custom logo on PDF, monthly data updates, priority support','AusBuild Pro V4 — Full Version')
+          with open('app/src/main/assets/index.html','w') as f: f.write(html)
+          print('Trial elements stripped - Pro version ready')
+          "
           "
 
       - name: Create AndroidManifest.xml
