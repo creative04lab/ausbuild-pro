@@ -18,20 +18,58 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.2
-
-      - name: Create Android project
+      - name: Create project structure
         run: |
           mkdir -p app/src/main/java/com/ausbuild/pro
           mkdir -p app/src/main/res/{layout,values,drawable,mipmap-hdpi}
           mkdir -p app/src/main/assets
           mkdir -p gradle/wrapper
 
-      - name: Create Gradle wrapper
+      - name: Create Gradle files and wrapper
         run: |
+          cat > settings.gradle << 'GEOF'
+          rootProject.name = "AusBuildProV4"
+          include ":app"
+          GEOF
+          cat > build.gradle << 'GEOF'
+          buildscript {
+            repositories { google(); mavenCentral() }
+            dependencies { classpath "com.android.tools.build:gradle:8.1.4" }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
+          GEOF
+          cat > gradle.properties << 'GEOF'
+          org.gradle.jvmargs=-Xmx2048m
+          android.useAndroidX=false
+          GEOF
+          cat > app/build.gradle << 'GEOF'
+          plugins { id "com.android.application" }
+          android {
+            namespace "com.ausbuild.pro"
+            compileSdk 34
+            defaultConfig {
+              applicationId "com.ausbuild.pro"
+              minSdk 24
+              targetSdk 34
+              versionCode 1
+              versionName "4.0"
+            }
+            buildTypes { release { minifyEnabled false } }
+            compileOptions {
+              sourceCompatibility JavaVersion.VERSION_11
+              targetCompatibility JavaVersion.VERSION_11
+            }
+          }
+          GEOF
+          cat > gradle/wrapper/gradle-wrapper.properties << 'GEOF'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
+          networkTimeout=10000
+          validateDistributionUrl=true
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          GEOF
           gradle wrapper --gradle-version 8.2
 
       - name: Prepare mobile HTML
@@ -117,43 +155,6 @@ jobs:
             </style>
           </resources>
           XMLEOF
-
-      - name: Create Gradle files
-        run: |
-          cat > build.gradle << 'GEOF'
-          buildscript {
-            repositories { google(); mavenCentral() }
-            dependencies { classpath "com.android.tools.build:gradle:8.1.4" }
-          }
-          allprojects { repositories { google(); mavenCentral() } }
-          GEOF
-          cat > settings.gradle << 'GEOF'
-          rootProject.name = "AusBuildProV4"
-          include ":app"
-          GEOF
-          cat > gradle.properties << 'GEOF'
-          org.gradle.jvmargs=-Xmx2048m
-          android.useAndroidX=false
-          GEOF
-          cat > app/build.gradle << 'GEOF'
-          plugins { id "com.android.application" }
-          android {
-            namespace "com.ausbuild.pro"
-            compileSdk 34
-            defaultConfig {
-              applicationId "com.ausbuild.pro"
-              minSdk 24
-              targetSdk 34
-              versionCode 1
-              versionName "4.0"
-            }
-            buildTypes { release { minifyEnabled false } }
-            compileOptions {
-              sourceCompatibility JavaVersion.VERSION_11
-              targetCompatibility JavaVersion.VERSION_11
-            }
-          }
-          GEOF
 
       - name: Build APK
         run: |
