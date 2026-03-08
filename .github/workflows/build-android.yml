@@ -3,6 +3,9 @@ name: Build Android APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,7 +37,7 @@ jobs:
           cp AusBuild-Pro-V4-Free.html app/src/main/assets/index.html
           python3 -c "
           with open('app/src/main/assets/index.html','r') as f: html=f.read()
-          html=html.replace('<script src=\\"https://cdn.tailwindcss.com\\"></script>','<script src=\\"https://cdn.tailwindcss.com\\"></script>\\n<script src=\\"https://js.puter.com/v2/\\"></script>')
+          html=html.replace('<script src=\\\"https://cdn.tailwindcss.com\\\"></script>','<script src=\\\"https://cdn.tailwindcss.com\\\"></script>\\n<script src=\\\"https://js.puter.com/v2/\\\"></script>')
           html=html.replace('width=device-width, initial-scale=1.0','width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
           css='@media(max-width:768px){nav{flex-wrap:wrap;height:auto!important;padding:8px 12px!important;gap:6px}nav>div:first-child{width:100%%;text-align:center}#nav-tabs{width:100%%;display:flex;justify-content:center;gap:4px;overflow-x:auto}#nav-tabs .tab-btn{padding:6px 12px!important;font-size:11px!important;white-space:nowrap}nav>div:last-child{display:none}#tab-calc>div,#tab-design>div,#tab-quote>div{flex-direction:column!important;overflow-y:auto!important}body{overflow:auto!important;height:auto!important;min-height:100vh}select,input,button{font-size:14px!important;min-height:36px}}*{-webkit-tap-highlight-color:transparent}'
           html=html.replace('</style>',css+'\\n</style>')
@@ -159,3 +162,14 @@ jobs:
         with:
           name: AusBuild-Pro-V4-Android
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Rename APK
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk AusBuild-Pro-V4.apk
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete v4.0-android --yes 2>/dev/null || true
+          gh release create v4.0-android AusBuild-Pro-V4.apk --title "AusBuild Pro V4 Android APK" --notes "Download the APK and install on Android."
