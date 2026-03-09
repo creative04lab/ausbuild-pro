@@ -3,6 +3,9 @@ name: Build Android APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -189,7 +192,7 @@ jobs:
               html = f.read()
 
           # 1. Change title
-          html = html.replace('AusBuild Pro V4 — Free Trial', 'AusBuild Pro V4')
+          html = html.replace('AusBuild Pro V4 â Free Trial', 'AusBuild Pro V4')
 
           # 2. Remove watermark CSS block
           html = re.sub(
@@ -288,10 +291,10 @@ jobs:
             loading.style.display = 'block';
 
             document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
-            document.getElementById('aiStatus').textContent = '⏳ Generating AI image...';
+            document.getElementById('aiStatus').textContent = 'â³ Generating AI image...';
             const genBtn = document.getElementById('generateBtn');
             if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.6'; }
-            document.getElementById('generateBtnIcon').textContent = '⏳';
+            document.getElementById('generateBtnIcon').textContent = 'â³';
             document.getElementById('generateBtnText').textContent = 'Generating...';
 
             try {
@@ -318,15 +321,15 @@ jobs:
               console.error('AI generation error:', err);
               loading.style.display = 'none';
               showRender();
-              document.getElementById('aiStatus').textContent = '⚠️ ' + err.message.substring(0, 50);
+              document.getElementById('aiStatus').textContent = 'â ï¸ ' + err.message.substring(0, 50);
             } finally {
               document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-green-500';
-              if (!document.getElementById('aiStatus').textContent.startsWith('⚠️')) {
-                document.getElementById('aiStatus').textContent = '🤖 AI Render Complete — Generated ' + renderCount + ' images';
+              if (!document.getElementById('aiStatus').textContent.startsWith('â ï¸')) {
+                document.getElementById('aiStatus').textContent = 'ð¤ AI Render Complete â Generated ' + renderCount + ' images';
               }
               const gb = document.getElementById('generateBtn');
               if (gb) { gb.disabled = false; gb.style.opacity = '1'; }
-              document.getElementById('generateBtnIcon').textContent = '✨';
+              document.getElementById('generateBtnIcon').textContent = 'â¨';
               document.getElementById('generateBtnText').textContent = 'Generate';
             }
           }
@@ -505,16 +508,16 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v4.0.1-android
-          name: "AusBuild Pro V4.0.1 — Android"
+          name: "AusBuild Pro V4.0.1 â Android"
           body: |
-            ## AusBuild Pro V4.0.1 — Android APK
+            ## AusBuild Pro V4.0.1 â Android APK
 
             **Changes in v4.0.1:**
             - Full responsive mobile layout for all tabs (Design AI, Lot Yield, Budget)
             - Design AI: vertical top-bottom layout on mobile (canvas top, AI render bottom)
             - AI Image Generation via Puter.js integration
             - Complete Pro version: no watermark, no trial banners, no login
-            - Buy-once model — no login required
+            - Buy-once model â no login required
 
             **Install:** Download `AusBuild-Pro-V4.apk` and install on your Android device.
           files: AusBuild-Pro-V4.apk
