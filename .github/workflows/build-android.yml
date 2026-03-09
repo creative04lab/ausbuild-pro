@@ -178,6 +178,31 @@ jobs:
           # Fix body class for mobile scroll
           html = html.replace('h-screen flex flex-col overflow-hidden', 'min-h-screen flex flex-col')
 
+          # Fix real-time calculator updates: add oninput to all calculator inputs
+          # totalArea and frontage have onchange but no oninput
+          html = html.replace(
+              'id="totalArea" onchange="calcYield()"',
+              'id="totalArea" oninput="calcYield()" onchange="calcYield()"'
+          )
+          html = html.replace(
+              'id="frontage" onchange="calcYield()"',
+              'id="frontage" oninput="calcYield()" onchange="calcYield()"'
+          )
+          # depth and truncation have NO event handlers at all
+          html = html.replace(
+              'id="depth">',
+              'id="depth" oninput="calcYield()" onchange="calcYield()">'
+          )
+          html = html.replace(
+              'id="truncation">',
+              'id="truncation" oninput="calcYield()" onchange="calcYield()">'
+          )
+          # isBattleaxe checkbox has no handler
+          html = html.replace(
+              'id="isBattleaxe"',
+              'id="isBattleaxe" onchange="calcYield()"'
+          )
+
           with open('app/src/main/assets/index.html', 'w') as f:
               f.write(html)
           print('HTML mobile CSS applied successfully')
@@ -192,7 +217,7 @@ jobs:
               html = f.read()
 
           # 1. Change title
-          html = html.replace('AusBuild Pro V4 — Free Trial', 'AusBuild Pro V4')
+          html = html.replace('AusBuild Pro V4 â Free Trial', 'AusBuild Pro V4')
 
           # 2. Remove watermark CSS block
           html = re.sub(
@@ -291,10 +316,10 @@ jobs:
             loading.style.display = 'block';
 
             document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
-            document.getElementById('aiStatus').textContent = '⏳ Generating AI image...';
+            document.getElementById('aiStatus').textContent = 'Generating AI image...';
             const genBtn = document.getElementById('generateBtn');
             if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.6'; }
-            document.getElementById('generateBtnIcon').textContent = '⏳';
+            document.getElementById('generateBtnIcon').textContent = '...';
             document.getElementById('generateBtnText').textContent = 'Generating...';
 
             try {
@@ -321,31 +346,24 @@ jobs:
               console.error('AI generation error:', err);
               loading.style.display = 'none';
               showRender();
-              document.getElementById('aiStatus').textContent = '⚠️ ' + err.message.substring(0, 50);
+              document.getElementById('aiStatus').textContent = 'Error: ' + err.message.substring(0, 50);
             } finally {
               document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-green-500';
-              if (!document.getElementById('aiStatus').textContent.startsWith('⚠️')) {
-                document.getElementById('aiStatus').textContent = '🤖 AI Render Complete — Generated ' + renderCount + ' images';
+              if (!document.getElementById('aiStatus').textContent.startsWith('Error')) {
+                document.getElementById('aiStatus').textContent = 'AI Render Complete - Generated ' + renderCount + ' images';
               }
               const gb = document.getElementById('generateBtn');
               if (gb) { gb.disabled = false; gb.style.opacity = '1'; }
-              document.getElementById('generateBtnIcon').textContent = '✨';
+              document.getElementById('generateBtnIcon').textContent = 'AI';
               document.getElementById('generateBtnText').textContent = 'Generate';
             }
           }
           """
 
-          # Insert the Puter AI function right before the onGenerateClick function
-          html = html.replace(
-              '// Manual generate button handler\nfunction onGenerateClick() {\n  // Clear cache for current mode so it re-generates\n  aiRenderedImages[currentViewMode] = null;\n  generateAIRender()',
-              puter_ai_code + '\n// Manual generate button handler\nfunction onGenerateClick() {\n  // Clear cache for current mode so it re-generates\n  aiRenderedImages[currentViewMode] = null;\n  // Use Puter.js AI if available, otherwise fall back to Stability API\n  if (typeof puter !== "undefined" && puter.ai) { generateAIRenderPuter()'
-          )
-
-          # Close the if/else properly
-          html = html.replace(
-              "if (typeof puter !== \"undefined\" && puter.ai) { generateAIRenderPuter().catch((err) => {\n    showRender();\n    console.error('Generate failed:', err);",
-              "if (typeof puter !== \"undefined\" && puter.ai) { generateAIRenderPuter().catch((err) => {\n    showRender();\n    console.error('Generate failed:', err);"
-          )
+          # Replace the entire onGenerateClick function with proper Puter.js support
+          old_func = '// Manual generate button handler\nfunction onGenerateClick() {\n  // Clear cache for current mode so it re-generates\n  aiRenderedImages[currentViewMode] = null;\n  generateAIRender().catch((err) => {\n    showRender();\n    console.error(\'Generate failed:\', err);\n  });\n}'
+          new_func = '// Manual generate button handler\nfunction onGenerateClick() {\n  // Clear cache for current mode so it re-generates\n  aiRenderedImages[currentViewMode] = null;\n  // Use Puter.js AI if available, otherwise fall back to Stability API\n  if (typeof puter !== "undefined" && puter.ai) {\n    generateAIRenderPuter().catch((err) => {\n      showRender();\n      console.error(\'Generate failed:\', err);\n    });\n  } else {\n    generateAIRender().catch((err) => {\n      showRender();\n      console.error(\'Generate failed:\', err);\n    });\n  }\n}'
+          html = html.replace(old_func, puter_ai_code + '\n' + new_func)
 
           with open('app/src/main/assets/index.html', 'w') as f:
               f.write(html)
@@ -474,8 +492,8 @@ jobs:
               applicationId "com.ausbuild.pro"
               minSdk 24
               targetSdk 34
-              versionCode 2
-              versionName "4.0.1"
+              versionCode 3
+              versionName "4.0.2"
             }
             buildTypes { release { minifyEnabled false } }
             compileOptions {
@@ -507,17 +525,19 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v4.0.1-android
-          name: "AusBuild Pro V4.0.1 — Android"
+          tag_name: v4.0.2-android
+          name: "AusBuild Pro V4.0.2 â Android"
           body: |
-            ## AusBuild Pro V4.0.1 — Android APK
+            ## AusBuild Pro V4.0.2 â Android APK
 
-            **Changes in v4.0.1:**
-            - Full responsive mobile layout for all tabs (Design AI, Lot Yield, Budget)
-            - Design AI: vertical top-bottom layout on mobile (canvas top, AI render bottom)
+            **Changes in v4.0.2:**
+            - Fixed: All tabs now respond to taps on mobile (Design AI, Budget Estimate)
+            - Fixed: Calculator updates in real-time as you type (oninput events)
+            - Fixed: JavaScript syntax error in Puter.js AI integration
+            - Full responsive mobile layout for all tabs
+            - Design AI: vertical top-bottom layout on mobile
             - AI Image Generation via Puter.js integration
             - Complete Pro version: no watermark, no trial banners, no login
-            - Buy-once model — no login required
 
             **Install:** Download `AusBuild-Pro-V4.apk` and install on your Android device.
           files: AusBuild-Pro-V4.apk
