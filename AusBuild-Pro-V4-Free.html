@@ -1013,9 +1013,7 @@ function showRender() {
   }
 }
 
-// ===== STABILITY AI API INTEGRATION =====
-const STABILITY_API_KEY = ''; // API key removed for free distribution
-const STABILITY_API_HOST = 'https://api.stability.ai';
+// ===== AI IMAGE GENERATION (Pollinations.ai -- Free, No API Key) =====
 
 const AI_PROMPTS = {
   floor: `Ultra-detailed professional architectural floor plan, technical drawing style, crisp black wall outlines on white background, accurate room proportions, furniture layout symbols, dimension annotations with arrows, room area labels in square meters, north arrow indicator, scale bar 1:100, door swing arcs, window symbols as parallel lines, hatching for wet areas. Clean vector-like precision, AutoCAD presentation quality, A3 sheet format.`,
@@ -1032,7 +1030,6 @@ async function generateAIRender() {
   let hasContent = false;
   for (let i = 0; i < imageData.data.length; i += 4) {
     const r = imageData.data[i], g = imageData.data[i+1], b = imageData.data[i+2];
-    // Skip near-white pixels (grid lines and background)
     if (r < 200 || g < 200 || b < 200) { hasContent = true; break; }
   }
   if (!hasContent) return;
@@ -1050,102 +1047,61 @@ async function generateAIRender() {
   placeholder.style.display = 'none';
   loading.style.display = 'block';
 
-  // Update status bar + disable generate button during generation
+  // Update status bar + disable generate button
   document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
-  document.getElementById('aiStatus').textContent = '⏳ Generating... (Stability AI ControlNet)';
+  document.getElementById('aiStatus').textContent = '⏳ Generating AI Render...';
   const genBtn = document.getElementById('generateBtn');
   if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.6'; }
   document.getElementById('generateBtnIcon').textContent = '⏳';
   document.getElementById('generateBtnText').textContent = 'Generating...';
 
   try {
-    // Get sketch as base64 PNG
-    const dataUrl = drawCanvas.toDataURL('image/png');
-    const base64 = dataUrl.split(',')[1];
-    const imageBuffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-
-    // Use custom prompt from input box if provided, otherwise use default
+    // Build prompt from custom input or default for current view mode
     const customPrompt = (document.getElementById('aiPromptInput')?.value || '').trim();
     const basePrompt = AI_PROMPTS[currentViewMode] || AI_PROMPTS.ext;
     const prompt = customPrompt ? `${customPrompt}. ${basePrompt}` : basePrompt;
-    const negativePrompt = 'low quality, blurry, distorted, deformed, cartoon, anime, watermark, text overlay, ugly, amateur, poorly drawn, emoji, clipart, gradient background, sketch, wireframe, unrealistic proportions, floating objects, broken geometry, oversaturated';
-    const strength = currentViewMode === 'floor' ? 0.5 : 0.65;
 
-    // Try ControlNet sketch endpoint first
-    const formData = new FormData();
-    formData.append('image', new Blob([imageBuffer], { type: 'image/png' }), 'sketch.png');
-    formData.append('prompt', prompt);
-    formData.append('control_strength', strength.toString());
-    formData.append('output_format', 'png');
+    // === Pollinations.ai -- Free AI image generation, no API key, no auth ===
+    // Works in any environment including Android WebView
+    const seed = Math.floor(Math.random() * 2147483647);
+    const encodedPrompt = encodeURIComponent(prompt);
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=${seed}&model=flux&nologo=true`;
 
-    let response = await fetch(`${STABILITY_API_HOST}/v2beta/stable-image/control/sketch`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${STABILITY_API_KEY}`,
-        'Accept': 'application/json',
-      },
-      body: formData,
+    document.getElementById('aiStatus').textContent = '⏳ Generating... (FLUX AI)';
+
+    // Load image via Pollinations.ai URL (returns image directly)
+    const imgSrc = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('AI generation timed out (60s)')), 60000);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => { clearTimeout(timeout); resolve(img.src); };
+      img.onerror = () => { clearTimeout(timeout); reject(new Error('Failed to load AI image')); };
+      img.src = pollinationsUrl;
     });
 
-    // Fallback to img2img if ControlNet 404s
-    if (response.status === 404) {
-      const formData2 = new FormData();
-      formData2.append('image', new Blob([imageBuffer], { type: 'image/png' }), 'sketch.png');
-      formData2.append('prompt', prompt);
-      formData2.append('negative_prompt', negativePrompt);
-      formData2.append('mode', 'image-to-image');
-      formData2.append('strength', strength.toString());
-      formData2.append('output_format', 'png');
+    aiRenderedImages[currentViewMode] = imgSrc;
+    loading.style.display = 'none';
+    aiRenderImg.src = imgSrc;
+    aiRenderImg.style.display = 'block';
+    renderCount++;
 
-      response = await fetch(`${STABILITY_API_HOST}/v2beta/stable-image/generate/core`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${STABILITY_API_KEY}`,
-          'Accept': 'application/json',
-        },
-        body: formData2,
-      });
-    }
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`API ${response.status}: ${errText}`);
-    }
-
-    const result = await response.json();
-    let imgBase64 = null;
-
-    if (result.image) {
-      imgBase64 = result.image;
-    } else if (result.artifacts && result.artifacts[0]) {
-      imgBase64 = result.artifacts[0].base64;
-    }
-
-    if (imgBase64) {
-      aiRenderedImages[currentViewMode] = `data:image/png;base64,${imgBase64}`;
-      loading.style.display = 'none';
-      aiRenderImg.src = aiRenderedImages[currentViewMode];
-      aiRenderImg.style.display = 'block';
-      renderCount++;
-    } else {
-      throw new Error('No image in API response');
-    }
+    // Success
+    document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-green-500';
+    document.getElementById('aiStatus').textContent = `🤖 AI Render Complete -- Generated ${renderCount} images`;
   } catch (err) {
-    console.error('Stability AI error:', err);
+    console.error('AI generation error:', err);
     loading.style.display = 'none';
     // Fall back to Canvas 2D render
     showRender();
-    document.getElementById('aiStatus').textContent = `⚠️ AI Error: ${err.message.substring(0, 50)}`;
+    document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-red-500';
+    document.getElementById('aiStatus').textContent = `⚠️ AI Fallback (Canvas 2D) -- ${err.message.substring(0, 80)}`;
   } finally {
-    document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-green-500';
-    document.getElementById('aiStatus').textContent = `🤖 AI Render Complete — Generated ${renderCount} images`;
-    const genBtn = document.getElementById('generateBtn');
-    if (genBtn) { genBtn.disabled = false; genBtn.style.opacity = '1'; }
+    const genBtn2 = document.getElementById('generateBtn');
+    if (genBtn2) { genBtn2.disabled = false; genBtn2.style.opacity = '1'; }
     document.getElementById('generateBtnIcon').textContent = '✨';
     document.getElementById('generateBtnText').textContent = 'Generate';
   }
 }
-
 // ===== QUOTE TOOL — AArch CALIBRATED (170 Scenarios, March 2026, Sydney Metro) =====
 // Rates: AUD inc GST | All-inclusive (Prelims + Shell + Fitout + Ext + Cont + 20% Margin + 10% GST)
 // Reference: 200m² internal, standard external — sizes scale automatically
