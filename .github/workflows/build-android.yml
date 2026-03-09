@@ -217,7 +217,7 @@ jobs:
               html = f.read()
 
           # 1. Change title
-          html = html.replace('AusBuild Pro V4 â Free Trial', 'AusBuild Pro V4')
+          html = html.replace('AusBuild Pro V4 -- Free Trial', 'AusBuild Pro V4')
 
           # 2. Remove watermark CSS block
           html = re.sub(
@@ -526,9 +526,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v4.0.2-android
-          name: "AusBuild Pro V4.0.2 â Android"
+          name: "AusBuild Pro V4.0.2 -- Android"
           body: |
-            ## AusBuild Pro V4.0.2 â Android APK
+            ## AusBuild Pro V4.0.2 -- Android APK
 
             **Changes in v4.0.2:**
             - Fixed: All tabs now respond to taps on mobile (Design AI, Budget Estimate)
