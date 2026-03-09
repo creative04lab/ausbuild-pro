@@ -43,10 +43,6 @@ jobs:
               html = f.read()
 
           # Add Puter.js for AI image generation
-          html = html.replace(
-              '<script src="https://cdn.tailwindcss.com"></script>',
-              '<script src="https://cdn.tailwindcss.com"></script>\n<script src="https://js.puter.com/v2/"></script>'
-          )
 
           # Prevent zoom on mobile
           html = html.replace(
