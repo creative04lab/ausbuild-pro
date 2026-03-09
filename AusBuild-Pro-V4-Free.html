@@ -1069,15 +1069,26 @@ async function generateAIRender() {
 
     document.getElementById('aiStatus').textContent = '⏳ Generating... (FLUX AI)';
 
-    // Load image via Pollinations.ai URL (returns image directly)
-    const imgSrc = await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('AI generation timed out (60s)')), 60000);
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => { clearTimeout(timeout); resolve(img.src); };
-      img.onerror = () => { clearTimeout(timeout); reject(new Error('Failed to load AI image')); };
-      img.src = pollinationsUrl;
-    });
+    // Load image via Pollinations.ai URL (fetch blob for WebView compatibility)
+      let imgSrc;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 90000);
+        const resp = await fetch(pollinationsUrl, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const blob = await resp.blob();
+        imgSrc = URL.createObjectURL(blob);
+      } catch(fetchErr) {
+        // Fallback: try direct Image load without crossOrigin
+        imgSrc = await new Promise((resolve, reject) => {
+          const t = setTimeout(() => reject(new Error('AI generation timed out')), 90000);
+          const img = new Image();
+          img.onload = () => { clearTimeout(t); resolve(img.src); };
+          img.onerror = () => { clearTimeout(t); reject(new Error('Failed to load AI image')); };
+          img.src = pollinationsUrl;
+        });
+      }
 
     aiRenderedImages[currentViewMode] = imgSrc;
     loading.style.display = 'none';
