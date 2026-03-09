@@ -35,7 +35,7 @@ jobs:
 
       - name: Prepare mobile HTML
         run: |
-          cp AusBuild-Pro-V4-Free.html app/src/main/assets/index.html
+          cp preview.html app/src/main/assets/index.html
           python3 << 'PYEOF'
           import re
 
