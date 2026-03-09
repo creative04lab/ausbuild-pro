@@ -35,14 +35,12 @@ jobs:
 
       - name: Prepare mobile HTML
         run: |
-          cp preview.html app/src/main/assets/index.html
+          cp AusBuild-Pro-V4-Free.html app/src/main/assets/index.html
           python3 << 'PYEOF'
           import re
 
           with open('app/src/main/assets/index.html', 'r') as f:
               html = f.read()
-
-          # Add Puter.js for AI image generation
 
           # Prevent zoom on mobile
           html = html.replace(
@@ -53,109 +51,32 @@ jobs:
           # --- COMPREHENSIVE MOBILE CSS ---
           mobile_css = '''
           @media (max-width: 768px) {
-            /* Nav responsive */
             nav { flex-wrap: wrap; height: auto !important; padding: 8px 12px !important; gap: 6px; }
             nav > div:first-child { width: 100%; text-align: center; font-size: 14px !important; }
             #nav-tabs { width: 100%; display: flex; justify-content: center; gap: 4px; overflow-x: auto; }
             #nav-tabs .tab-btn { padding: 6px 12px !important; font-size: 11px !important; white-space: nowrap; }
             nav > div:last-child { display: none; }
-
-            /* All tab panels: stack vertically */
             #tab-calc > div, #tab-design > div, #tab-quote > div {
-              flex-direction: column !important;
-              overflow-y: auto !important;
-              height: auto !important;
+              flex-direction: column !important; overflow-y: auto !important; height: auto !important;
             }
-
-            /* Body scroll fix */
-            body {
-              overflow: auto !important;
-              height: auto !important;
-              min-height: 100vh;
-            }
+            body { overflow: auto !important; height: auto !important; min-height: 100vh; }
             .flex-1.overflow-hidden { overflow: auto !important; height: auto !important; }
-
-            /* Tab content should scroll, not clip */
-            .tab-content.active {
-              height: auto !important;
-              min-height: calc(100vh - 80px);
-              overflow-y: auto !important;
-            }
-
-            /* Lot Yield tab: left panel full width */
-            #tab-calc > div > div:first-child {
-              width: 100% !important;
-              max-width: 100% !important;
-              border-right: none !important;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            #tab-calc > div > div:last-child {
-              width: 100% !important;
-            }
-
-            /* === DESIGN AI TAB: vertical stack === */
-            #tab-design > div > div:first-child {
-              width: 100% !important;
-              min-height: 45vh;
-              max-height: 50vh;
-              border-right: none !important;
-              border-bottom: 2px solid #4f46e5;
-            }
-            #tab-design > div > div:last-child {
-              width: 100% !important;
-              min-height: 50vh;
-            }
-
-            /* Design AI toolbar: wrap tools, smaller text */
-            #tab-design .draw-tool {
-              padding: 4px 6px !important;
-              font-size: 10px !important;
-            }
-            #tab-design .bg-white.border-b {
-              flex-wrap: wrap;
-              gap: 3px !important;
-              padding: 4px 6px !important;
-            }
+            .tab-content.active { height: auto !important; min-height: calc(100vh - 80px); overflow-y: auto !important; }
+            #tab-calc > div > div:first-child { width: 100% !important; max-width: 100% !important; border-right: none !important; border-bottom: 1px solid #e5e7eb; }
+            #tab-calc > div > div:last-child { width: 100% !important; }
+            #tab-design > div > div:first-child { width: 100% !important; min-height: 45vh; max-height: 50vh; border-right: none !important; border-bottom: 2px solid #4f46e5; }
+            #tab-design > div > div:last-child { width: 100% !important; min-height: 50vh; }
+            #tab-design .draw-tool { padding: 4px 6px !important; font-size: 10px !important; }
+            #tab-design .bg-white.border-b { flex-wrap: wrap; gap: 3px !important; padding: 4px 6px !important; }
             #penWidth { font-size: 10px !important; padding: 2px 4px !important; }
             #penColor { width: 22px !important; height: 22px !important; }
-
-            /* Design AI render panel: smaller controls */
-            #tab-design .view-btn {
-              padding: 3px 6px !important;
-              font-size: 9px !important;
-            }
-            #aiPromptInput {
-              font-size: 11px !important;
-              min-height: 36px !important;
-              max-height: 60px !important;
-            }
-            #generateBtn {
-              min-width: 65px !important;
-              padding: 4px 8px !important;
-              font-size: 10px !important;
-            }
-            /* AI status bar */
-            #tab-design .px-3.py-1\\.5 {
-              flex-wrap: wrap;
-              padding: 4px 8px !important;
-              gap: 4px;
-            }
-            #tab-design .px-3.py-1\\.5 > div {
-              font-size: 9px !important;
-            }
-
-            /* Quote tab: left panel full width */
-            #tab-quote > div > div:first-child {
-              width: 100% !important;
-              max-width: 100% !important;
-              border-right: none !important;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            #tab-quote > div > div:last-child {
-              width: 100% !important;
-            }
-
-            /* General mobile touch fixes */
+            #tab-design .view-btn { padding: 3px 6px !important; font-size: 9px !important; }
+            #aiPromptInput { font-size: 11px !important; min-height: 36px !important; max-height: 60px !important; }
+            #generateBtn { min-width: 65px !important; padding: 4px 8px !important; font-size: 10px !important; }
+            #tab-design .px-3.py-1\\.5 { flex-wrap: wrap; padding: 4px 8px !important; gap: 4px; }
+            #tab-design .px-3.py-1\\.5 > div { font-size: 9px !important; }
+            #tab-quote > div > div:first-child { width: 100% !important; max-width: 100% !important; border-right: none !important; border-bottom: 1px solid #e5e7eb; }
+            #tab-quote > div > div:last-child { width: 100% !important; }
             select, input, button { font-size: 14px !important; min-height: 36px; }
             .grid-cols-3 { grid-template-columns: 1fr !important; }
             .grid-cols-2 { grid-template-columns: 1fr !important; }
@@ -169,38 +90,20 @@ jobs:
           }
           * { -webkit-tap-highlight-color: transparent; }
           '''
-          html = html.replace('</style>', mobile_css + '\n</style>')
 
-          # Fix body class for mobile scroll
+          html = html.replace('</style>', mobile_css + '\n</style>')
           html = html.replace('h-screen flex flex-col overflow-hidden', 'min-h-screen flex flex-col')
 
-          # Fix real-time calculator updates: add oninput to all calculator inputs
-          # totalArea and frontage have onchange but no oninput
-          html = html.replace(
-              'id="totalArea" onchange="calcYield()"',
-              'id="totalArea" oninput="calcYield()" onchange="calcYield()"'
-          )
-          html = html.replace(
-              'id="frontage" onchange="calcYield()"',
-              'id="frontage" oninput="calcYield()" onchange="calcYield()"'
-          )
-          # depth and truncation have NO event handlers at all
-          html = html.replace(
-              'id="depth">',
-              'id="depth" oninput="calcYield()" onchange="calcYield()">'
-          )
-          html = html.replace(
-              'id="truncation">',
-              'id="truncation" oninput="calcYield()" onchange="calcYield()">'
-          )
-          # isBattleaxe checkbox has no handler
-          html = html.replace(
-              'id="isBattleaxe"',
-              'id="isBattleaxe" onchange="calcYield()"'
-          )
+          # Fix real-time calculator updates
+          html = html.replace('id="totalArea" onchange="calcYield()"', 'id="totalArea" oninput="calcYield()" onchange="calcYield()"')
+          html = html.replace('id="frontage" onchange="calcYield()"', 'id="frontage" oninput="calcYield()" onchange="calcYield()"')
+          html = html.replace('id="depth">', 'id="depth" oninput="calcYield()" onchange="calcYield()">')
+          html = html.replace('id="truncation">', 'id="truncation" oninput="calcYield()" onchange="calcYield()">')
+          html = html.replace('id="isBattleaxe"', 'id="isBattleaxe" onchange="calcYield()"')
 
           with open('app/src/main/assets/index.html', 'w') as f:
               f.write(html)
+
           print('HTML mobile CSS applied successfully')
           PYEOF
 
@@ -213,157 +116,43 @@ jobs:
               html = f.read()
 
           # 1. Change title
-          html = html.replace('AusBuild Pro V4 -- Free Trial', 'AusBuild Pro V4')
+          html = html.replace('AusBuild Pro V4 \u2014 Free Trial', 'AusBuild Pro V4')
 
           # 2. Remove watermark CSS block
           html = re.sub(
-              r'/\* Trial Watermark \*/.*?\.trial-banner a \{[^}]*\}',
-              '/* Pro Version - No watermark */',
-              html,
-              flags=re.DOTALL
+              r'/\*\s*Trial Watermark\s*\*/.*?\.trial-banner\s+a\s*\{[^}]*\}',
+              '/* Pro Version */',
+              html, flags=re.DOTALL
           )
 
-          # 3. Remove watermark HTML overlay div
-          html = re.sub(
-              r'<!-- TRIAL WATERMARK -->.*?</div>\s*<!-- TOP NAV -->',
-              '<!-- TOP NAV -->',
-              html,
-              flags=re.DOTALL
-          )
+          # 3. Remove watermark overlay div
+          html = re.sub(r'<div class="watermark-overlay"></div>', '', html)
 
-          # 4. Remove FREE TRIAL badge from nav
-          html = re.sub(
-              r'<span class="ml-2 px-2 py-0\.5 bg-yellow-500[^"]*">[^<]*FREE TRIAL[^<]*</span>',
-              '',
-              html
-          )
+          # 4. Remove FREE TRIAL badge
+          html = re.sub(r'<span[^>]*class="[^"]*bg-yellow[^"]*"[^>]*>[^<]*FREE TRIAL[^<]*</span>', '', html)
 
-          # 5. Remove Login button entirely
-          html = re.sub(
-              r'<button onclick="alert\(\'Login requires.*?</button>',
-              '',
-              html,
-              flags=re.DOTALL
-          )
+          # 5. Remove trial banner in nav
+          html = re.sub(r'Free Trial Version\s*[^<]*<a[^>]*href="[^"]*gumroad[^"]*"[^>]*>[^<]*Upgrade to Pro[^<]*</a>', 'AusBuild Pro V4', html)
 
-          # 6. Remove the trial upgrade banner from JavaScript
-          html = re.sub(
-              r"// Trial upgrade banner\s*html \+= `[^`]*FREE TRIAL VERSION[^`]*`;",
-              '// Pro Version - no trial banner',
-              html,
-              flags=re.DOTALL
-          )
+          # 6. Remove trial upgrade banner from JS
+          html = re.sub(r"//\s*Trial upgrade banner\s*\n\s*html \+= `[^`]*FREE TRIAL VERSION[^`]*`;", '// Pro Version', html, flags=re.DOTALL)
 
-          # 7. Replace any remaining "FREE TRIAL VERSION" text
+          # 7. Replace remaining text references
           html = html.replace('FREE TRIAL VERSION', 'PRO VERSION')
           html = html.replace('FREE TRIAL', 'PRO')
           html = html.replace('Free Trial Version', 'AusBuild Pro V4')
           html = html.replace('Free Trial', 'Pro')
 
-          # 8. Update the upgrade text in quote results
-          html = re.sub(
-              r'Upgrade to <strong>Pro[^<]*</strong>[^<]*priority support',
-              'AusBuild Pro V4 - Full Version',
-              html
-          )
+          # 8. Remove gumroad links
+          html = re.sub(r'<a[^>]*href="[^"]*gumroad[^"]*"[^>]*>.*?</a>', '', html, flags=re.DOTALL)
+
+          # 9. Remove Login button
+          html = re.sub(r"<button[^>]*onclick=\"alert\('Login requires.*?</button>", '', html, flags=re.DOTALL)
 
           with open('app/src/main/assets/index.html', 'w') as f:
               f.write(html)
-          print('Trial elements stripped successfully')
-          PYEOF
 
-      - name: Add Puter.js AI generation support
-        run: |
-          python3 << 'PYEOF'
-          with open('app/src/main/assets/index.html', 'r') as f:
-              html = f.read()
-
-          # Replace the empty Stability API key section with Puter.js-powered generation
-          old_block = "const STABILITY_API_KEY = ''; // API key removed for free distribution"
-          new_block = "const STABILITY_API_KEY = ''; // Pro uses Puter.js AI"
-
-          html = html.replace(old_block, new_block)
-
-          # Replace the generateAIRender function to use Puter.js
-          # Find the function and replace it
-          puter_ai_code = """
-          // ===== PUTER.JS AI IMAGE GENERATION (PRO VERSION) =====
-          async function generateAIRenderPuter() {
-            const drawCanvas = document.getElementById('drawCanvas');
-            if (!drawCanvas || drawCanvas.width === 0) return;
-            const imageData = drawCanvas.getContext('2d').getImageData(0, 0, drawCanvas.width, drawCanvas.height);
-            let hasContent = false;
-            for (let i = 0; i < imageData.data.length; i += 4) {
-              const r = imageData.data[i], g = imageData.data[i+1], b = imageData.data[i+2];
-              if (r < 200 || g < 200 || b < 200) { hasContent = true; break; }
-            }
-            if (!hasContent) return;
-
-            const svgContainer = document.getElementById('svgContainer');
-            const renderCanvas = document.getElementById('renderCanvas');
-            const aiRenderImg = document.getElementById('aiRenderImg');
-            const placeholder = document.getElementById('renderPlaceholder');
-            const loading = document.getElementById('renderLoading');
-
-            svgContainer.style.display = 'none';
-            renderCanvas.style.display = 'none';
-            aiRenderImg.style.display = 'none';
-            placeholder.style.display = 'none';
-            loading.style.display = 'block';
-
-            document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
-            document.getElementById('aiStatus').textContent = 'Generating AI image...';
-            const genBtn = document.getElementById('generateBtn');
-            if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.6'; }
-            document.getElementById('generateBtnIcon').textContent = '...';
-            document.getElementById('generateBtnText').textContent = 'Generating...';
-
-            try {
-              const customPrompt = (document.getElementById('aiPromptInput').value || '').trim();
-              const basePrompt = AI_PROMPTS[currentViewMode] || AI_PROMPTS.ext;
-              const prompt = customPrompt ? customPrompt + '. ' + basePrompt : basePrompt;
-
-              // Use Puter.js AI for text-to-image generation
-              if (typeof puter !== 'undefined' && puter.ai) {
-                const response = await puter.ai.txt2img(prompt);
-                if (response && response.src) {
-                  aiRenderedImages[currentViewMode] = response.src;
-                  loading.style.display = 'none';
-                  aiRenderImg.src = response.src;
-                  aiRenderImg.style.display = 'block';
-                  renderCount++;
-                } else {
-                  throw new Error('No image returned from Puter AI');
-                }
-              } else {
-                throw new Error('Puter.js AI not available');
-              }
-            } catch (err) {
-              console.error('AI generation error:', err);
-              loading.style.display = 'none';
-              showRender();
-              document.getElementById('aiStatus').textContent = 'Error: ' + err.message.substring(0, 50);
-            } finally {
-              document.getElementById('aiDot').className = 'w-2 h-2 rounded-full bg-green-500';
-              if (!document.getElementById('aiStatus').textContent.startsWith('Error')) {
-                document.getElementById('aiStatus').textContent = 'AI Render Complete - Generated ' + renderCount + ' images';
-              }
-              const gb = document.getElementById('generateBtn');
-              if (gb) { gb.disabled = false; gb.style.opacity = '1'; }
-              document.getElementById('generateBtnIcon').textContent = 'AI';
-              document.getElementById('generateBtnText').textContent = 'Generate';
-            }
-          }
-          """
-
-          # Replace the entire onGenerateClick function with proper Puter.js support
-          old_func = '// Manual generate button handler\nfunction onGenerateClick() {\n  // Clear cache for current mode so it re-generates\n  aiRenderedImages[currentViewMode] = null;\n  generateAIRender().catch((err) => {\n    showRender();\n    console.error(\'Generate failed:\', err);\n  });\n}'
-          new_func = '// Manual generate button handler\nfunction onGenerateClick() {\n  // Clear cache for current mode so it re-generates\n  aiRenderedImages[currentViewMode] = null;\n  // Use Puter.js AI if available, otherwise fall back to Stability API\n  if (typeof puter !== "undefined" && puter.ai) {\n    generateAIRenderPuter().catch((err) => {\n      showRender();\n      console.error(\'Generate failed:\', err);\n    });\n  } else {\n    generateAIRender().catch((err) => {\n      showRender();\n      console.error(\'Generate failed:\', err);\n    });\n  }\n}'
-          html = html.replace(old_func, puter_ai_code + '\n' + new_func)
-
-          with open('app/src/main/assets/index.html', 'w') as f:
-              f.write(html)
-          print('Puter.js AI integration added successfully')
+          print('Trial elements stripped - Pro version ready')
           PYEOF
 
       - name: Create AndroidManifest.xml
@@ -396,6 +185,7 @@ jobs:
         run: |
           cat > app/src/main/java/com/ausbuild/pro/MainActivity.java << 'JAVAEOF'
           package com.ausbuild.pro;
+
           import android.app.Activity;
           import android.os.Bundle;
           import android.webkit.WebView;
@@ -404,16 +194,22 @@ jobs:
           import android.webkit.WebSettings;
           import android.view.Window;
           import android.view.WindowManager;
+
           public class MainActivity extends Activity {
               private WebView webView;
+
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   requestWindowFeature(Window.FEATURE_NO_TITLE);
-                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                      WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                  getWindow().setFlags(
+                      WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                      WindowManager.LayoutParams.FLAG_FULLSCREEN
+                  );
+
                   webView = new WebView(this);
                   setContentView(webView);
+
                   WebSettings s = webView.getSettings();
                   s.setJavaScriptEnabled(true);
                   s.setDomStorageEnabled(true);
@@ -423,10 +219,12 @@ jobs:
                   s.setBuiltInZoomControls(false);
                   s.setDisplayZoomControls(false);
                   s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
                   webView.setWebViewClient(new WebViewClient());
                   webView.setWebChromeClient(new WebChromeClient());
                   webView.loadUrl("file:///android_asset/index.html");
               }
+
               @Override
               public void onBackPressed() {
                   if (webView.canGoBack()) webView.goBack();
@@ -446,7 +244,7 @@ jobs:
             </style>
           </resources>
           EOF
-          # Create a simple launcher icon
+
           python3 << 'PYEOF'
           import struct, zlib
           def create_png(w, h, color):
@@ -472,6 +270,7 @@ jobs:
           cat > settings.gradle << 'EOF'
           include ':app'
           EOF
+
           cat > build.gradle << 'EOF'
           buildscript {
             repositories { google(); mavenCentral() }
@@ -479,6 +278,7 @@ jobs:
           }
           allprojects { repositories { google(); mavenCentral() } }
           EOF
+
           cat > app/build.gradle << 'EOF'
           plugins { id 'com.android.application' }
           android {
@@ -488,8 +288,8 @@ jobs:
               applicationId "com.ausbuild.pro"
               minSdk 24
               targetSdk 34
-              versionCode 3
-              versionName "4.0.2"
+              versionCode 4
+              versionName "4.0.3"
             }
             buildTypes { release { minifyEnabled false } }
             compileOptions {
@@ -499,6 +299,7 @@ jobs:
             lint { abortOnError false }
           }
           EOF
+
           cat > gradle.properties << 'EOF'
           android.useAndroidX=false
           org.gradle.jvmargs=-Xmx2048m
@@ -521,21 +322,21 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v4.0.2-android
-          name: "AusBuild Pro V4.0.2 -- Android"
+          tag_name: v4.0.3-android
+          name: "AusBuild Pro V4.0.3 - Android"
           body: |
-            ## AusBuild Pro V4.0.2 -- Android APK
+            ## AusBuild Pro V4.0.3 - Android APK
 
-            **Changes in v4.0.2:**
-            - Fixed: All tabs now respond to taps on mobile (Design AI, Budget Estimate)
-            - Fixed: Calculator updates in real-time as you type (oninput events)
-            - Fixed: JavaScript syntax error in Puter.js AI integration
-            - Full responsive mobile layout for all tabs
-            - Design AI: vertical top-bottom layout on mobile
-            - AI Image Generation via Puter.js integration
-            - Complete Pro version: no watermark, no trial banners, no login
+            **Changes in v4.0.3:**
+            - Fixed: AI Image Generation uses Pollinations.ai (free, no API key)
+            - Fixed: No more grey screen verification popup
+            - Fixed: All tabs respond to taps on mobile
+            - Fixed: Calculator updates in real-time
+            - Full responsive mobile layout
+            - Design AI with real FLUX AI image generation
+            - Complete Pro version: no watermark, no trial banners
 
-            **Install:** Download `AusBuild-Pro-V4.apk` and install on your Android device.
+            **Install:** Download AusBuild-Pro-V4.apk and install on Android.
           files: AusBuild-Pro-V4.apk
           draft: false
           prerelease: false
