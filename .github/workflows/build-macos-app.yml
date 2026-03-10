@@ -1,0 +1,202 @@
+name: Build macOS App
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Generate macOS Project
+        run: |
+          mkdir -p AusBuildMac/AusBuildPro/Resources
+          mkdir -p AusBuildMac/AusBuildPro/Assets.xcassets/AppIcon.appiconset
+
+          python3 << 'PYEOF'
+          import re
+          with open('AusBuild-Pro-V4-Free.html', 'r') as f:
+              html = f.read()
+          html = re.sub(r'<span[^>]*>FREE TRIAL</span>', '', html)
+          html = re.sub(r'<div class=.watermark-overlay.></div>', '', html)
+          html = html.replace('Free Trial', 'Pro')
+          with open('AusBuildMac/AusBuildPro/Resources/index.html', 'w') as f:
+              f.write(html)
+          print("HTML processed")
+          PYEOF
+
+          cat > AusBuildMac/AusBuildPro/AppDelegate.swift << 'SWIFT'
+          import Cocoa
+          import WebKit
+
+          @main
+          class AppDelegate: NSObject, NSApplicationDelegate {
+              var window: NSWindow!
+              var webView: WKWebView!
+
+              func applicationDidFinishLaunching(_ notification: Notification) {
+                  let config = WKWebViewConfiguration()
+                  config.preferences.setValue(true, forKey: "javaScriptEnabled")
+                  let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+                  let windowWidth: CGFloat = 1280
+                  let windowHeight: CGFloat = 800
+                  let windowX = (screenRect.width - windowWidth) / 2
+                  let windowY = (screenRect.height - windowHeight) / 2
+                  window = NSWindow(
+                      contentRect: NSRect(x: windowX, y: windowY, width: windowWidth, height: windowHeight),
+                      styleMask: [.titled, .closable, .resizable, .miniaturizable],
+                      backing: .buffered,
+                      defer: false
+                  )
+                  window.title = "AusBuild Pro V4"
+                  window.minSize = NSSize(width: 800, height: 600)
+                  window.backgroundColor = NSColor(red: 0.051, green: 0.106, blue: 0.243, alpha: 1)
+                  webView = WKWebView(frame: window.contentView!.bounds, configuration: config)
+                  webView.autoresizingMask = [.width, .height]
+                  window.contentView?.addSubview(webView)
+                  if let htmlPath = Bundle.main.path(forResource: "index", ofType: "html", inDirectory: "Resources") {
+                      let htmlURL = URL(fileURLWithPath: htmlPath)
+                      webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
+                  }
+                  window.makeKeyAndOrderFront(nil)
+                  NSApp.activate(ignoringOtherApps: true)
+              }
+
+              func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+                  return true
+              }
+          }
+          SWIFT
+
+          cat > AusBuildMac/AusBuildPro/Info.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleDevelopmentRegion</key><string>en</string>
+              <key>CFBundleDisplayName</key><string>AusBuild Pro</string>
+              <key>CFBundleExecutable</key><string>AusBuildPro</string>
+              <key>CFBundleIdentifier</key><string>com.creative04lab.ausbuildpro.mac</string>
+              <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+              <key>CFBundleName</key><string>AusBuild Pro</string>
+              <key>CFBundlePackageType</key><string>APPL</string>
+              <key>CFBundleShortVersionString</key><string>4.0</string>
+              <key>CFBundleVersion</key><string>1</string>
+              <key>LSMinimumSystemVersion</key><string>12.0</string>
+              <key>NSPrincipalClass</key><string>NSApplication</string>
+              <key>NSAppTransportSecurity</key><dict><key>NSAllowsArbitraryLoads</key><true/></dict>
+              <key>NSHumanReadableCopyright</key><string>Copyright 2024 Creative04Lab.</string>
+          </dict>
+          </plist>
+          PLIST
+
+          cat > AusBuildMac/AusBuildPro/Assets.xcassets/Contents.json << 'JSON'
+          {"info":{"version":1,"author":"xcode"}}
+          JSON
+
+          cat > AusBuildMac/AusBuildPro/Assets.xcassets/AppIcon.appiconset/Contents.json << 'JSON'
+          {"images":[{"idiom":"mac","scale":"1x","size":"16x16","filename":"icon-16.png"},{"idiom":"mac","scale":"2x","size":"16x16","filename":"icon-32.png"},{"idiom":"mac","scale":"1x","size":"32x32","filename":"icon-32.png"},{"idiom":"mac","scale":"2x","size":"32x32","filename":"icon-64.png"},{"idiom":"mac","scale":"1x","size":"128x128","filename":"icon-128.png"},{"idiom":"mac","scale":"2x","size":"128x128","filename":"icon-256.png"},{"idiom":"mac","scale":"1x","size":"256x256","filename":"icon-256.png"},{"idiom":"mac","scale":"2x","size":"256x256","filename":"icon-512.png"},{"idiom":"mac","scale":"1x","size":"512x512","filename":"icon-512.png"},{"idiom":"mac","scale":"2x","size":"512x512","filename":"icon-1024.png"}],"info":{"version":1,"author":"xcode"}}
+          JSON
+
+          python3 << 'ICONEOF'
+          import struct, zlib, os
+          def make_icon(size, filepath):
+              raw = b''
+              for y in range(size):
+                  raw += b'\x00'
+                  for x in range(size):
+                      cx, cy = x - size // 2, y - size // 2
+                      r = size // 3
+                      if cx*cx + cy*cy < r*r:
+                          raw += bytes([30, 64, 120, 255])
+                      else:
+                          raw += bytes([13, 27, 62, 255])
+              ihdr = struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0)
+              idat = zlib.compress(raw)
+              out = b'\x89PNG\r\n\x1a\n'
+              for ctype, data in [(b'IHDR', ihdr), (b'IDAT', idat), (b'IEND', b'')]:
+                  c = ctype + data
+                  out += struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
+              with open(filepath, 'wb') as f:
+                  f.write(out)
+              print(f'Icon {size}x{size} done')
+          base = 'AusBuildMac/AusBuildPro/Assets.xcassets/AppIcon.appiconset'
+          for s in [16, 32, 64, 128, 256, 512, 1024]:
+              make_icon(s, f'{base}/icon-{s}.png')
+          ICONEOF
+          echo "macOS project files created"
+
+      - name: Generate Xcode Project
+        run: |
+          brew install xcodegen
+          cat > AusBuildMac/project.yml << 'SPEC'
+          name: AusBuildPro
+          options:
+            bundleIdPrefix: com.creative04lab
+            deploymentTarget:
+              macOS: "12.0"
+          settings:
+            CODE_SIGN_IDENTITY: "-"
+            CODE_SIGNING_REQUIRED: "NO"
+            CODE_SIGNING_ALLOWED: "NO"
+          targets:
+            AusBuildPro:
+              type: application
+              platform: macOS
+              sources:
+                - path: AusBuildPro
+                  excludes: ["Resources/**", "Assets.xcassets/**"]
+              resources:
+                - path: AusBuildPro/Resources
+                - path: AusBuildPro/Assets.xcassets
+              settings:
+                INFOPLIST_FILE: AusBuildPro/Info.plist
+                PRODUCT_BUNDLE_IDENTIFIER: com.creative04lab.ausbuildpro.mac
+                MARKETING_VERSION: "4.0"
+                CURRENT_PROJECT_VERSION: "1"
+                SWIFT_VERSION: "5.0"
+                MACOSX_DEPLOYMENT_TARGET: "12.0"
+                CODE_SIGN_IDENTITY: "-"
+                CODE_SIGNING_REQUIRED: "NO"
+                CODE_SIGNING_ALLOWED: "NO"
+                COMBINE_HIDPI_IMAGES: "YES"
+          SPEC
+          cd AusBuildMac && xcodegen generate
+
+      - name: Build macOS App
+        run: |
+          cd AusBuildMac
+          xcodebuild -project AusBuildPro.xcodeproj \
+            -scheme AusBuildPro -configuration Release \
+            -sdk macosx -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO ONLY_ACTIVE_ARCH=NO build
+
+      - name: Create DMG
+        run: |
+          cd AusBuildMac
+          APP_PATH="build/Build/Products/Release/AusBuild Pro.app"
+          if [ ! -d "$APP_PATH" ]; then
+            APP_PATH="build/Build/Products/Release/AusBuildPro.app"
+          fi
+          ls -la "build/Build/Products/Release/"
+          mkdir -p dmg_contents
+          cp -r "$APP_PATH" dmg_contents/
+          ln -s /Applications dmg_contents/Applications
+          hdiutil create -volname "AusBuild Pro V4" \
+            -srcfolder dmg_contents -ov -format UDZO AusBuildPro-V4.dmg
+          ls -la AusBuildPro-V4.dmg
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AusBuild-Pro-V4-macOS
+          path: AusBuildMac/AusBuildPro-V4.dmg
+          retention-days: 90
