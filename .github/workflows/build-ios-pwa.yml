@@ -21,36 +21,49 @@ jobs:
         run: |
           mkdir -p pwa-build/icons
 
-          # Copy and process the HTML source
+          # Copy HTML source
           cp AusBuild-Pro-V4-Free.html pwa-build/source.html
 
-          # Strip FREE TRIAL watermarks and branding
-          python3 -c "
-          import re
-          with open('pwa-build/source.html','r') as f: html=f.read()
+          # Write Python processing script to a file first
+          cat > /tmp/process_html.py << 'PYEOF'
+          import re, sys
+
+          with open('pwa-build/source.html', 'r') as f:
+              html = f.read()
+
           # Remove FREE TRIAL badge
-          html=re.sub(r'<span[^>]*>FREE TRIAL</span>','',html)
-          # Remove watermark overlay CSS and div
-          html=re.sub(r'/\\*\\s*Trial Watermark\\s*\\*/.*?\\.watermark-overlay::after\\s*\\{[^}]*\\}','',html,flags=re.DOTALL)
-          html=re.sub(r'<div class=.watermark-overlay.></div>','',html)
+          html = re.sub(r'<span[^>]*>FREE TRIAL</span>', '', html)
+
+          # Remove watermark overlay div
+          html = re.sub(r'<div class=.watermark-overlay.></div>', '', html)
+
           # Update title
-          html=html.replace('AusBuild Pro V4 \u2013 Free Trial','AusBuild Pro V4')
-          html=html.replace('Free Trial','Pro')
+          html = html.replace('AusBuild Pro V4 \u2013 Free Trial', 'AusBuild Pro V4')
+          html = html.replace('Free Trial', 'Pro')
+
           # Add PWA manifest link and meta tags for iOS
-          pwa_meta = '''
-          <link rel="manifest" href="manifest.json">
-          <meta name="apple-mobile-web-app-capable" content="yes">
-          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-          <meta name="apple-mobile-web-app-title" content="AusBuild Pro">
-          <link rel="apple-touch-icon" href="icons/icon-192.png">
-          <meta name="theme-color" content="#0d1b3e">
-          '''
-          html=html.replace('</head>', pwa_meta + '</head>')
+          pwa_meta = (
+              '<link rel="manifest" href="manifest.json">\n'
+              '<meta name="apple-mobile-web-app-capable" content="yes">\n'
+              '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n'
+              '<meta name="apple-mobile-web-app-title" content="AusBuild Pro">\n'
+              '<link rel="apple-touch-icon" href="icons/icon-192.png">\n'
+              '<meta name="theme-color" content="#0d1b3e">\n'
+          )
+          html = html.replace('</head>', pwa_meta + '</head>')
+
           # Add service worker registration
           sw_reg = '<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js")}</script>'
-          html=html.replace('</body>', sw_reg + '</body>')
-          with open('pwa-build/index.html','w') as f: f.write(html)
-          "
+          html = html.replace('</body>', sw_reg + '</body>')
+
+          with open('pwa-build/index.html', 'w') as f:
+              f.write(html)
+          print("HTML processed successfully")
+          PYEOF
+
+          # Fix indentation (heredoc adds leading spaces)
+          sed -i 's/^          //' /tmp/process_html.py
+          python3 /tmp/process_html.py
 
           # Create manifest.json
           cat > pwa-build/manifest.json << 'MANIFEST'
@@ -70,7 +83,7 @@ jobs:
           }
           MANIFEST
 
-          # Create service worker for offline support
+          # Create service worker
           cat > pwa-build/sw.js << 'SW'
           const CACHE = 'ausbuild-v4';
           const ASSETS = ['./index.html', './manifest.json'];
@@ -78,9 +91,10 @@ jobs:
           self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
           SW
 
-          # Generate simple app icons using Python
-          python3 -c "
+          # Generate app icons using Python
+          cat > /tmp/make_icons.py << 'ICONEOF'
           import struct, zlib, os
+
           def make_png(w, h, color):
               def chunk(ctype, data):
                   c = ctype + data
@@ -96,12 +110,16 @@ jobs:
                           raw += bytes(color + [255])
               ihdr = struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)
               return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'')
+
           os.makedirs('pwa-build/icons', exist_ok=True)
-          for size, name in [(192,'icon-192'),(512,'icon-512')]:
-              with open(f'pwa-build/icons/{name}.png','wb') as f:
+          for size, name in [(192, 'icon-192'), (512, 'icon-512')]:
+              with open(f'pwa-build/icons/{name}.png', 'wb') as f:
                   f.write(make_png(size, size, [13, 27, 62]))
           print('Icons generated')
-          "
+          ICONEOF
+
+          sed -i 's/^          //' /tmp/make_icons.py
+          python3 /tmp/make_icons.py
 
           echo "PWA build complete"
           ls -la pwa-build/
