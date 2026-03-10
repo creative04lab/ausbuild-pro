@@ -1,0 +1,320 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Generate iOS Project
+        run: |
+          # Create project structure
+          mkdir -p AusBuildiOS/AusBuildPro
+          mkdir -p AusBuildiOS/AusBuildPro/Resources
+
+          # Copy and process the HTML
+          python3 << 'PYEOF'
+          import re
+          with open('AusBuild-Pro-V4-Free.html', 'r') as f:
+              html = f.read()
+          html = re.sub(r'<span[^>]*>FREE TRIAL</span>', '', html)
+          html = re.sub(r'<div class=.watermark-overlay.></div>', '', html)
+          html = html.replace('Free Trial', 'Pro')
+          with open('AusBuildiOS/AusBuildPro/Resources/index.html', 'w') as f:
+              f.write(html)
+          print("HTML processed")
+          PYEOF
+
+          # Create AppDelegate.swift
+          cat > AusBuildiOS/AusBuildPro/AppDelegate.swift << 'SWIFT'
+          import UIKit
+
+          @main
+          class AppDelegate: UIResponder, UIApplicationDelegate {
+              var window: UIWindow?
+
+              func application(_ application: UIApplication,
+                               didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+                  window = UIWindow(frame: UIScreen.main.bounds)
+                  window?.rootViewController = ViewController()
+                  window?.makeKeyAndVisible()
+                  return true
+              }
+          }
+          SWIFT
+
+          # Create ViewController.swift with WKWebView
+          cat > AusBuildiOS/AusBuildPro/ViewController.swift << 'SWIFT'
+          import UIKit
+          import WebKit
+
+          class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
+              var webView: WKWebView!
+
+              override func viewDidLoad() {
+                  super.viewDidLoad()
+
+                  let config = WKWebViewConfiguration()
+                  config.allowsInlineMediaPlayback = true
+                  config.preferences.javaScriptEnabled = true
+
+                  webView = WKWebView(frame: view.bounds, configuration: config)
+                  webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                  webView.navigationDelegate = self
+                  webView.uiDelegate = self
+                  webView.scrollView.bounces = false
+
+                  if #available(iOS 11.0, *) {
+                      webView.scrollView.contentInsetAdjustmentBehavior = .never
+                  }
+
+                  view.addSubview(webView)
+
+                  if let htmlPath = Bundle.main.path(forResource: "index", ofType: "html", inDirectory: "Resources") {
+                      let htmlURL = URL(fileURLWithPath: htmlPath)
+                      webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
+                  }
+              }
+
+              override var prefersStatusBarHidden: Bool { return false }
+              override var preferredStatusBarStyle: UIStatusBarStyle { return .lightContent }
+
+              func webView(_ webView: WKWebView,
+                           runJavaScriptAlertPanelWithMessage message: String,
+                           initiatedByFrame frame: WKFrameInfo,
+                           completionHandler: @escaping () -> Void) {
+                  let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+                  alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in completionHandler() })
+                  present(alert, animated: true)
+              }
+          }
+          SWIFT
+
+          # Create Info.plist
+          cat > AusBuildiOS/AusBuildPro/Info.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleDevelopmentRegion</key>
+              <string>en</string>
+              <key>CFBundleDisplayName</key>
+              <string>AusBuild Pro</string>
+              <key>CFBundleExecutable</key>
+              <string>AusBuildPro</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.creative04lab.ausbuildpro</string>
+              <key>CFBundleInfoDictionaryVersion</key>
+              <string>6.0</string>
+              <key>CFBundleName</key>
+              <string>AusBuildPro</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>4.0</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>LSRequiresIPhoneOS</key>
+              <true/>
+              <key>UILaunchStoryboardName</key>
+              <string>LaunchScreen</string>
+              <key>UIRequiredDeviceCapabilities</key>
+              <array>
+                  <string>armv7</string>
+              </array>
+              <key>UISupportedInterfaceOrientations</key>
+              <array>
+                  <string>UIInterfaceOrientationPortrait</string>
+                  <string>UIInterfaceOrientationLandscapeLeft</string>
+                  <string>UIInterfaceOrientationLandscapeRight</string>
+              </array>
+              <key>UISupportedInterfaceOrientations~ipad</key>
+              <array>
+                  <string>UIInterfaceOrientationPortrait</string>
+                  <string>UIInterfaceOrientationPortraitUpsideDown</string>
+                  <string>UIInterfaceOrientationLandscapeLeft</string>
+                  <string>UIInterfaceOrientationLandscapeRight</string>
+              </array>
+              <key>UIStatusBarStyle</key>
+              <string>UIStatusBarStyleLightContent</string>
+              <key>UIViewControllerBasedStatusBarAppearance</key>
+              <true/>
+              <key>NSAppTransportSecurity</key>
+              <dict>
+                  <key>NSAllowsArbitraryLoads</key>
+                  <true/>
+              </dict>
+              <key>ITSAppUsesNonExemptEncryption</key>
+              <false/>
+          </dict>
+          </plist>
+          PLIST
+
+          # Create LaunchScreen storyboard
+          cat > AusBuildiOS/AusBuildPro/LaunchScreen.storyboard << 'STORYBOARD'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="AppleSDK" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+              <scenes>
+                  <scene sceneID="EHf-IW-A2E">
+                      <objects>
+                          <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                              <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                                  <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                                  <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                  <subviews>
+                                      <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="AusBuild Pro V4" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lbl-1">
+                                          <fontDescription key="fontDescription" type="boldSystem" pointSize="28"/>
+                                          <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                      </label>
+                                  </subviews>
+                                  <color key="backgroundColor" red="0.051" green="0.106" blue="0.243" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                  <constraints>
+                                      <constraint firstItem="lbl-1" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="cx1"/>
+                                      <constraint firstItem="lbl-1" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="cy1"/>
+                                  </constraints>
+                              </view>
+                          </viewController>
+                          <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                      </objects>
+                  </scene>
+              </scenes>
+          </document>
+          STORYBOARD
+
+          # Create Assets catalog
+          mkdir -p AusBuildiOS/AusBuildPro/Assets.xcassets/AppIcon.appiconset
+          cat > AusBuildiOS/AusBuildPro/Assets.xcassets/Contents.json << 'JSON'
+          {"info":{"version":1,"author":"xcode"}}
+          JSON
+
+          cat > AusBuildiOS/AusBuildPro/Assets.xcassets/AppIcon.appiconset/Contents.json << 'JSON'
+          {"images":[{"idiom":"universal","platform":"ios","size":"1024x1024","filename":"icon-1024.png"}],"info":{"version":1,"author":"xcode"}}
+          JSON
+
+          # Generate 1024x1024 app icon
+          python3 << 'ICONEOF'
+          import struct, zlib, os
+          size = 1024
+          raw = b''
+          for y in range(size):
+              raw += b'\x00'
+              for x in range(size):
+                  cx = x - size // 2
+                  cy = y - size // 2
+                  r = size // 3
+                  if cx * cx + cy * cy < r * r:
+                      raw += bytes([30, 64, 120, 255])
+                  else:
+                      raw += bytes([13, 27, 62, 255])
+          ihdr = struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0)
+          idat = zlib.compress(raw)
+          out = b'\x89PNG\r\n\x1a\n'
+          for ctype, data in [(b'IHDR', ihdr), (b'IDAT', idat), (b'IEND', b'')]:
+              c = ctype + data
+              out += struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
+          with open('AusBuildiOS/AusBuildPro/Assets.xcassets/AppIcon.appiconset/icon-1024.png', 'wb') as f:
+              f.write(out)
+          print('Icon 1024x1024 generated')
+          ICONEOF
+
+          echo "iOS project files generated"
+          ls -laR AusBuildiOS/
+
+      - name: Generate Xcode Project
+        run: |
+          # Install XcodeGen
+          brew install xcodegen
+
+          # Create XcodeGen spec
+          cat > AusBuildiOS/project.yml << 'SPEC'
+          name: AusBuildPro
+          options:
+            bundleIdPrefix: com.creative04lab
+            deploymentTarget:
+              iOS: "15.0"
+            xcodeVersion: "15.0"
+          settings:
+            DEVELOPMENT_TEAM: ""
+            CODE_SIGN_IDENTITY: ""
+            CODE_SIGNING_REQUIRED: "NO"
+            CODE_SIGNING_ALLOWED: "NO"
+          targets:
+            AusBuildPro:
+              type: application
+              platform: iOS
+              sources:
+                - path: AusBuildPro
+                  excludes:
+                    - "Resources/**"
+              resources:
+                - path: AusBuildPro/Resources
+                - path: AusBuildPro/Assets.xcassets
+                - path: AusBuildPro/LaunchScreen.storyboard
+              settings:
+                INFOPLIST_FILE: AusBuildPro/Info.plist
+                PRODUCT_BUNDLE_IDENTIFIER: com.creative04lab.ausbuildpro
+                MARKETING_VERSION: "4.0"
+                CURRENT_PROJECT_VERSION: "1"
+                TARGETED_DEVICE_FAMILY: "1,2"
+                SWIFT_VERSION: "5.0"
+                IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+                CODE_SIGN_IDENTITY: ""
+                CODE_SIGNING_REQUIRED: "NO"
+                CODE_SIGNING_ALLOWED: "NO"
+          SPEC
+
+          cd AusBuildiOS
+          xcodegen generate
+          echo "Xcode project generated"
+
+      - name: Build iOS App
+        run: |
+          cd AusBuildiOS
+          xcodebuild -project AusBuildPro.xcodeproj \
+            -scheme AusBuildPro \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            archive \
+            -archivePath build/AusBuildPro.xcarchive
+
+          echo "Archive created"
+          ls -la build/
+
+      - name: Package for Distribution
+        run: |
+          cd AusBuildiOS/build
+
+          # Create unsigned IPA from xcarchive
+          mkdir -p Payload
+          cp -r AusBuildPro.xcarchive/Products/Applications/AusBuildPro.app Payload/
+          zip -r AusBuildPro-unsigned.ipa Payload/
+          rm -rf Payload
+
+          # Also zip the xcarchive for Xcode signing
+          zip -r AusBuildPro.xcarchive.zip AusBuildPro.xcarchive/
+
+          echo "Packages created"
+          ls -la *.ipa *.zip
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AusBuild-Pro-V4-iOS
+          path: |
+            AusBuildiOS/build/AusBuildPro-unsigned.ipa
+            AusBuildiOS/build/AusBuildPro.xcarchive.zip
+          retention-days: 90
