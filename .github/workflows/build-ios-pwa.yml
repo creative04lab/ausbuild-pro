@@ -1,0 +1,114 @@
+name: Build iOS PWA
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create PWA Package
+        run: |
+          mkdir -p pwa-build/icons
+
+          # Copy and process the HTML source
+          cp AusBuild-Pro-V4-Free.html pwa-build/source.html
+
+          # Strip FREE TRIAL watermarks and branding
+          python3 -c "
+          import re
+          with open('pwa-build/source.html','r') as f: html=f.read()
+          # Remove FREE TRIAL badge
+          html=re.sub(r'<span[^>]*>FREE TRIAL</span>','',html)
+          # Remove watermark overlay CSS and div
+          html=re.sub(r'/\\*\\s*Trial Watermark\\s*\\*/.*?\\.watermark-overlay::after\\s*\\{[^}]*\\}','',html,flags=re.DOTALL)
+          html=re.sub(r'<div class=.watermark-overlay.></div>','',html)
+          # Update title
+          html=html.replace('AusBuild Pro V4 \u2013 Free Trial','AusBuild Pro V4')
+          html=html.replace('Free Trial','Pro')
+          # Add PWA manifest link and meta tags for iOS
+          pwa_meta = '''
+          <link rel="manifest" href="manifest.json">
+          <meta name="apple-mobile-web-app-capable" content="yes">
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+          <meta name="apple-mobile-web-app-title" content="AusBuild Pro">
+          <link rel="apple-touch-icon" href="icons/icon-192.png">
+          <meta name="theme-color" content="#0d1b3e">
+          '''
+          html=html.replace('</head>', pwa_meta + '</head>')
+          # Add service worker registration
+          sw_reg = '<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js")}</script>'
+          html=html.replace('</body>', sw_reg + '</body>')
+          with open('pwa-build/index.html','w') as f: f.write(html)
+          "
+
+          # Create manifest.json
+          cat > pwa-build/manifest.json << 'MANIFEST'
+          {
+            "name": "AusBuild Pro V4",
+            "short_name": "AusBuild",
+            "description": "Professional lot yield calculator, AI design renderer and budget estimator",
+            "start_url": "./index.html",
+            "display": "standalone",
+            "orientation": "portrait",
+            "background_color": "#0d1b3e",
+            "theme_color": "#0d1b3e",
+            "icons": [
+              {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+              {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"}
+            ]
+          }
+          MANIFEST
+
+          # Create service worker for offline support
+          cat > pwa-build/sw.js << 'SW'
+          const CACHE = 'ausbuild-v4';
+          const ASSETS = ['./index.html', './manifest.json'];
+          self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))));
+          self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+          SW
+
+          # Generate simple app icons using Python
+          python3 -c "
+          import struct, zlib, os
+          def make_png(w, h, color):
+              def chunk(ctype, data):
+                  c = ctype + data
+                  return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
+              raw = b''
+              for y in range(h):
+                  raw += b'\x00'
+                  for x in range(w):
+                      cx, cy = x - w//2, y - h//2
+                      if cx*cx + cy*cy < (w//3)*(w//3):
+                          raw += bytes([30, 64, 120, 255])
+                      else:
+                          raw += bytes(color + [255])
+              ihdr = struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)
+              return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'')
+          os.makedirs('pwa-build/icons', exist_ok=True)
+          for size, name in [(192,'icon-192'),(512,'icon-512')]:
+              with open(f'pwa-build/icons/{name}.png','wb') as f:
+                  f.write(make_png(size, size, [13, 27, 62]))
+          print('Icons generated')
+          "
+
+          echo "PWA build complete"
+          ls -la pwa-build/
+
+      - name: Upload PWA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AusBuild-Pro-V4-PWA
+          path: pwa-build/
+          retention-days: 90
