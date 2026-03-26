@@ -1,10 +1,7 @@
-name: Build Android APK
+name: Build Android APK & AAB
 
 on:
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   build:
@@ -12,188 +9,131 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.2'
-
-      - name: Create project structure
+      - name: Create Android project structure
         run: |
-          mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/ausbuild/pro
-          mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/{layout,values,drawable,mipmap-hdpi,mipmap-xhdpi,mipmap-xxhdpi}
+          mkdir -p app/src/main/assets
 
       - name: Prepare mobile HTML
         run: |
-          cp AusBuild-Pro-V4-Free.html app/src/main/assets/index.html
-          python3 << 'PYEOF'
-          import re
+          # Copy the Pro version of the HTML
+          if [ -f "AusBuild-Pro-V4-Pro.html" ]; then
+            cp AusBuild-Pro-V4-Pro.html app/src/main/assets/index.html
+          elif [ -f "AusBuild-Pro-V4-Free.html" ]; then
+            cp AusBuild-Pro-V4-Free.html app/src/main/assets/index.html
+          fi
+          # Add mobile viewport and responsive CSS
+          python3 -c "
+          with open('app/src/main/assets/index.html','r') as f: html=f.read()
+          html=html.replace('width=device-width, initial-scale=1.0','width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+          css='*{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}'
+          html=html.replace('</style>',css+'\n</style>',1)
+          html=html.replace('h-screen flex flex-col overflow-hidden','min-h-screen flex flex-col')
+          with open('app/src/main/assets/index.html','w') as f: f.write(html)
+          print('HTML prepared for mobile')
+          "
 
-          with open('app/src/main/assets/index.html', 'r') as f:
-              html = f.read()
-
-          # Prevent zoom on mobile
-          html = html.replace(
-              'width=device-width, initial-scale=1.0',
-              'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
-          )
-
-          # --- COMPREHENSIVE MOBILE CSS ---
-          mobile_css = '''
-          @media (max-width: 768px) {
-            nav { flex-wrap: wrap; height: auto !important; padding: 8px 12px !important; gap: 6px; }
-            nav > div:first-child { width: 100%; text-align: center; font-size: 14px !important; }
-            #nav-tabs { width: 100%; display: flex; justify-content: center; gap: 4px; overflow-x: auto; }
-            #nav-tabs .tab-btn { padding: 6px 12px !important; font-size: 11px !important; white-space: nowrap; }
-            nav > div:last-child { display: none; }
-            #tab-calc > div, #tab-design > div, #tab-quote > div {
-              flex-direction: column !important; overflow-y: auto !important; height: auto !important;
-            }
-            body { overflow: auto !important; height: auto !important; min-height: 100vh; }
-            .flex-1.overflow-hidden { overflow: auto !important; height: auto !important; }
-            .tab-content.active { height: auto !important; min-height: calc(100vh - 80px); overflow-y: auto !important; }
-            #tab-calc > div > div:first-child { width: 100% !important; max-width: 100% !important; border-right: none !important; border-bottom: 1px solid #e5e7eb; }
-            #tab-calc > div > div:last-child { width: 100% !important; }
-            #tab-design > div > div:first-child { width: 100% !important; min-height: 45vh; max-height: 50vh; border-right: none !important; border-bottom: 2px solid #4f46e5; }
-            #tab-design > div > div:last-child { width: 100% !important; min-height: 50vh; }
-            #tab-design .draw-tool { padding: 4px 6px !important; font-size: 10px !important; }
-            #tab-design .bg-white.border-b { flex-wrap: wrap; gap: 3px !important; padding: 4px 6px !important; }
-            #penWidth { font-size: 10px !important; padding: 2px 4px !important; }
-            #penColor { width: 22px !important; height: 22px !important; }
-            #tab-design .view-btn { padding: 3px 6px !important; font-size: 9px !important; }
-            #aiPromptInput { font-size: 11px !important; min-height: 36px !important; max-height: 60px !important; }
-            #generateBtn { min-width: 65px !important; padding: 4px 8px !important; font-size: 10px !important; }
-            #tab-design .px-3.py-1\\.5 { flex-wrap: wrap; padding: 4px 8px !important; gap: 4px; }
-            #tab-design .px-3.py-1\\.5 > div { font-size: 9px !important; }
-            #tab-quote > div > div:first-child { width: 100% !important; max-width: 100% !important; border-right: none !important; border-bottom: 1px solid #e5e7eb; }
-            #tab-quote > div > div:last-child { width: 100% !important; }
-            select, input, button { font-size: 14px !important; min-height: 36px; }
-            .grid-cols-3 { grid-template-columns: 1fr !important; }
-            .grid-cols-2 { grid-template-columns: 1fr !important; }
-            table { font-size: 11px !important; }
-            table th, table td { padding: 4px 6px !important; }
-          }
-          @media (max-width: 400px) {
-            #nav-tabs .tab-btn { padding: 4px 8px !important; font-size: 10px !important; }
-            nav > div:first-child { font-size: 12px !important; }
-            #tab-design .draw-tool { font-size: 9px !important; padding: 3px 5px !important; }
-          }
-          * { -webkit-tap-highlight-color: transparent; }
-          '''
-
-          html = html.replace('</style>', mobile_css + '\n</style>')
-          html = html.replace('h-screen flex flex-col overflow-hidden', 'min-h-screen flex flex-col')
-
-          # Fix real-time calculator updates
-          html = html.replace('id="totalArea" onchange="calcYield()"', 'id="totalArea" oninput="calcYield()" onchange="calcYield()"')
-          html = html.replace('id="frontage" onchange="calcYield()"', 'id="frontage" oninput="calcYield()" onchange="calcYield()"')
-          html = html.replace('id="depth">', 'id="depth" oninput="calcYield()" onchange="calcYield()">')
-          html = html.replace('id="truncation">', 'id="truncation" oninput="calcYield()" onchange="calcYield()">')
-          html = html.replace('id="isBattleaxe"', 'id="isBattleaxe" onchange="calcYield()"')
-
-          with open('app/src/main/assets/index.html', 'w') as f:
-              f.write(html)
-
-          print('HTML mobile CSS applied successfully')
-          PYEOF
-
-      - name: Strip trial elements for Pro version
+      - name: Compile TailwindCSS for offline use
         run: |
-          python3 << 'PYEOF'
+          npm install tailwindcss@3
+          echo '@tailwind base;
+          @tailwind components;
+          @tailwind utilities;' > input.css
+          cat > tailwind.config.js << 'TWEOF'
+          module.exports = {
+            content: ['./app/src/main/assets/index.html'],
+            theme: {
+              extend: {
+                colors: {
+                  navy: {
+                    '50':'#e6eaf2','100':'#c0c9de','200':'#96a5c8',
+                    '300':'#6c81b2','400':'#4d66a2','500':'#2e4b93',
+                    '600':'#29448b','700':'#1f3a80','800':'#173175','900':'#0d1b3e'
+                  }
+                }
+              }
+            }
+          }
+          TWEOF
+          npx tailwindcss -i input.css -o compiled.css --minify
+          echo "Compiled CSS size: $(wc -c < compiled.css) bytes"
+          # Replace CDN script tags with compiled CSS
+          python3 -c "
           import re
-
-          with open('app/src/main/assets/index.html', 'r') as f:
-              html = f.read()
-
-          # 1. Change title
-          html = html.replace('AusBuild Pro V4 \u2014 Free Trial', 'AusBuild Pro V4')
-
-          # 2. Remove watermark CSS block
-          html = re.sub(
-              r'/\*\s*Trial Watermark\s*\*/.*?\.trial-banner\s+a\s*\{[^}]*\}',
-              '/* Pro Version */',
-              html, flags=re.DOTALL
-          )
-
-          # 3. Remove watermark overlay div
-          html = re.sub(r'<div class="watermark-overlay"></div>', '', html)
-
-          # 4. Remove FREE TRIAL badge
-          html = re.sub(r'<span[^>]*class="[^"]*bg-yellow[^"]*"[^>]*>[^<]*FREE TRIAL[^<]*</span>', '', html)
-
-          # 5. Remove trial banner in nav
-          html = re.sub(r'Free Trial Version\s*[^<]*<a[^>]*href="[^"]*gumroad[^"]*"[^>]*>[^<]*Upgrade to Pro[^<]*</a>', 'AusBuild Pro V4', html)
-
-          # 6. Remove trial upgrade banner from JS
-          html = re.sub(r"//\s*Trial upgrade banner\s*\n\s*html \+= `[^`]*FREE TRIAL VERSION[^`]*`;", '// Pro Version', html, flags=re.DOTALL)
-
-          # 7. Replace remaining text references
-          html = html.replace('FREE TRIAL VERSION', 'PRO VERSION')
-          html = html.replace('FREE TRIAL', 'PRO')
-          html = html.replace('Free Trial Version', 'AusBuild Pro V4')
-          html = html.replace('Free Trial', 'Pro')
-
-          # 8. Remove gumroad links
-          html = re.sub(r'<a[^>]*href="[^"]*gumroad[^"]*"[^>]*>.*?</a>', '', html, flags=re.DOTALL)
-
-          # 9. Remove Login button
-          html = re.sub(r"<button[^>]*onclick=\"alert\('Login requires.*?</button>", '', html, flags=re.DOTALL)
-
-          with open('app/src/main/assets/index.html', 'w') as f:
-              f.write(html)
-
-          print('Trial elements stripped - Pro version ready')
-          PYEOF
+          with open('app/src/main/assets/index.html','r') as f: html=f.read()
+          with open('compiled.css','r') as f: css=f.read()
+          # Remove CDN script tag
+          html=re.sub(r'<script src=\"https://cdn\.tailwindcss\.com\"></script>\s*','',html)
+          # Remove tailwind config script
+          html=re.sub(r'<script>tailwindcss\.config=\{.*?\}</script>\s*','',html)
+          # Insert compiled CSS before existing style block
+          html=html.replace('<style>','<style>\n'+css+'\n',1)
+          with open('app/src/main/assets/index.html','w') as f: f.write(html)
+          print('TailwindCSS compiled and inlined successfully')
+          "
 
       - name: Create AndroidManifest.xml
         run: |
-          cat > app/src/main/AndroidManifest.xml << 'XMLEOF'
+          cat > app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               package="com.ausbuild.pro">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <application
-                  android:allowBackup="true"
-                  android:icon="@drawable/ic_launcher"
-                  android:label="AusBuild Pro"
-                  android:theme="@style/AppTheme"
-                  android:usesCleartextTraffic="true">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:configChanges="orientation|screenSize|keyboard|keyboardHidden">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+            <application
+                android:allowBackup="true"
+                android:label="AusBuild Pro V4"
+                android:theme="@style/AppTheme"
+                android:usesCleartextTraffic="true"
+                android:hardwareAccelerated="true"
+                android:supportsRtl="true">
+              <activity
+                  android:name=".MainActivity"
+                  android:exported="true"
+                  android:configChanges="orientation|screenSize|keyboardHidden"
+                  android:screenOrientation="unspecified">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN"/>
+                  <category android:name="android.intent.category.LAUNCHER"/>
+                </intent-filter>
+              </activity>
+            </application>
           </manifest>
-          XMLEOF
+          EOF
 
       - name: Create MainActivity.java
         run: |
-          cat > app/src/main/java/com/ausbuild/pro/MainActivity.java << 'JAVAEOF'
+          cat> app/src/main/java/com/ausbuild/pro/MainActivity.java << 'JAVAEOF'
           package com.ausbuild.pro;
 
           import android.app.Activity;
+          import android.graphics.Color;
+          import android.os.Build;
           import android.os.Bundle;
-          import android.webkit.WebView;
-          import android.webkit.WebViewClient;
-          import android.webkit.WebChromeClient;
-          import android.webkit.WebSettings;
+          import android.view.View;
           import android.view.Window;
           import android.view.WindowManager;
+          import android.webkit.CookieManager;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
 
           public class MainActivity extends Activity {
               private WebView webView;
@@ -202,24 +142,54 @@ jobs:
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   requestWindowFeature(Window.FEATURE_NO_TITLE);
-                  getWindow().setFlags(
-                      WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                      WindowManager.LayoutParams.FLAG_FULLSCREEN
-                  );
+
+                  // Modern fullscreen for API 30+, fallback for older
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                      getWindow().setDecorFitsSystemWindows(false);
+                      getWindow().getInsetsController().hide(
+                          android.view.WindowInsets.Type.statusBars() |
+                          android.view.WindowInsets.Type.navigationBars()
+                      );
+                      getWindow().getInsetsController().setSystemBarsBehavior(
+                          android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                      );
+                  } else {
+                      getWindow().setFlags(
+                          WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                          WindowManager.LayoutParams.FLAG_FULLSCREEN
+                      );
+                      getWindow().getDecorView().setSystemUiVisibility(
+                          View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                          View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                          View.SYSTEM_UI_FLAG_FULLSCREEN |
+                          View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                      );
+                  }
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                      getWindow().setStatusBarColor(Color.parseColor("#0d1b3e"));
+                      getWindow().setNavigationBarColor(Color.parseColor("#0d1b3e"));
+                  }
 
                   webView = new WebView(this);
                   setContentView(webView);
 
-                  WebSettings s = webView.getSettings();
-                  s.setJavaScriptEnabled(true);
-                  s.setDomStorageEnabled(true);
-                  s.setAllowFileAccess(true);
-            s.setAllowUniversalAccessFromFileURLs(true);
-                  s.setLoadWithOverviewMode(true);
-                  s.setUseWideViewPort(true);
-                  s.setBuiltInZoomControls(false);
-                  s.setDisplayZoomControls(false);
-                  s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setAllowFileAccess(true);
+                  settings.setAllowContentAccess(true);
+                  settings.setLoadWithOverviewMode(true);
+                  settings.setUseWideViewPort(true);
+                  settings.setDatabaseEnabled(true);
+                  settings.setBuiltInZoomControls(false);
+                  settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+                  settings.setMediaPlaybackRequiresUserGesture(false);
+                  settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                      CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+                  }
 
                   webView.setWebViewClient(new WebViewClient());
                   webView.setWebChromeClient(new WebChromeClient());
@@ -227,51 +197,71 @@ jobs:
               }
 
               @Override
+              protected void onPause() {
+                  super.onPause();
+                  if (webView != null) {
+                      webView.onPause();
+                      webView.pauseTimers();
+                  }
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  if (webView != null) {
+                      webView.onResume();
+                      webView.resumeTimers();
+                  }
+              }
+
+              @Override
+              protected void onDestroy() {
+                  if (webView != null) {
+                      webView.stopLoading();
+                      webView.clearHistory();
+                      webView.clearCache(true);
+                      webView.loadUrl("about:blank");
+                      webView.onPause();
+                      webView.removeAllViews();
+                      webView.destroyDrawingCache();
+                      webView.destroy();
+                      webView = null;
+                  }
+                  super.onDestroy();
+              }
+
+              @Override
               public void onBackPressed() {
-                  if (webView.canGoBack()) webView.goBack();
-                  else super.onBackPressed();
+                  if (webView != null && webView.canGoBack()) {
+                      webView.goBack();
+                  } else {
+                      super.onBackPressed();
+                  }
               }
           }
           JAVAEOF
 
       - name: Create resource files
         run: |
-          cat > app/src/main/res/values/styles.xml << 'EOF'
+          cat > app/src/main/res/values/strings.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+            <string name="app_name">AusBuild Pro V4</string>
+          </resources>
+          EOF
+          cat > app/src/main/res/values/themes.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
             <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
               <item name="android:statusBarColor">#0d1b3e</item>
               <item name="android:navigationBarColor">#0d1b3e</item>
+              <item name="android:windowFullscreen">true</item>
             </style>
           </resources>
           EOF
 
-          python3 << 'PYEOF'
-          import struct, zlib
-          def create_png(w, h, color):
-              def chunk(ctype, data):
-                  c = ctype + data
-                  return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-              raw = b''
-              for y in range(h):
-                  raw += b'\x00'
-                  for x in range(w):
-                      cx, cy = x - w//2, y - h//2
-                      if cx*cx + cy*cy < (w//2 - 2)**2:
-                          raw += bytes(color)
-                      else:
-                          raw += b'\x00\x00\x00\x00'
-              return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'')
-          with open('app/src/main/res/drawable/ic_launcher.png', 'wb') as f:
-              f.write(create_png(48, 48, (13, 27, 62, 255)))
-          PYEOF
-
       - name: Create Gradle files
         run: |
-          cat > settings.gradle << 'EOF'
-          include ':app'
-          EOF
-
           cat > build.gradle << 'EOF'
           buildscript {
             repositories { google(); mavenCentral() }
@@ -279,7 +269,14 @@ jobs:
           }
           allprojects { repositories { google(); mavenCentral() } }
           EOF
-
+          cat > settings.gradle << 'EOF'
+          rootProject.name = 'AusBuildProV4'
+          include ':app'
+          EOF
+          cat > gradle.properties << 'EOF'
+          org.gradle.jvmargs=-Xmx2048m
+          android.useAndroidX=false
+          EOF
           cat > app/build.gradle << 'EOF'
           plugins { id 'com.android.application' }
           android {
@@ -289,57 +286,67 @@ jobs:
               applicationId "com.ausbuild.pro"
               minSdk 24
               targetSdk 34
-              versionCode 4
-              versionName "4.0.3"
+              versionCode 1
+              versionName "4.0"
             }
-            buildTypes { release { minifyEnabled false } }
+            signingConfigs {
+              release {
+                storeFile file("release-keystore.jks")
+                storePassword System.getenv("KEYSTORE_PASSWORD") ?: "ausbuild2024"
+                keyAlias System.getenv("KEY_ALIAS") ?: "ausbuild"
+                keyPassword System.getenv("KEY_PASSWORD") ?: "ausbuild2024"
+              }
+            }
+            buildTypes {
+              release {
+                minifyEnabled true
+                shrinkResources true
+                proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                signingConfig signingConfigs.release
+              }
+              debug {
+                debuggable true
+              }
+            }
             compileOptions {
-              sourceCompatibility JavaVersion.VERSION_17
-              targetCompatibility JavaVersion.VERSION_17
+              sourceCompatibility JavaVersion.VERSION_11
+              targetCompatibility JavaVersion.VERSION_11
             }
-            lint { abortOnError false }
           }
           EOF
-
-          cat > gradle.properties << 'EOF'
-          android.useAndroidX=false
-          org.gradle.jvmargs=-Xmx2048m
+          # Create proguard rules
+          cat > app/proguard-rules.pro << 'EOF'
+          -keepclassmembers class * {
+              @android.webkit.JavascriptInterface <methods>;
+          }
+          -keepattributes JavascriptInterface
+          -keep class android.webkit.** { *; }
           EOF
 
-      - name: Build APK
-        run: gradle assembleDebug
-        working-directory: ${{ github.workspace }}
+      - name: Generate signing keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore app/release-keystore.jks \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -alias ${KEY_ALIAS:-ausbuild} \
+            -storepass ${KEYSTORE_PASSWORD:-ausbuild2024} \
+            -keypass ${KEY_PASSWORD:-ausbuild2024} \
+            -dname "CN=AusBuild Pro, OU=Development, O=AusBuild, L=Perth, ST=WA, C=AU"
 
-      - name: Upload APK artifact
+      - name: Build Release APK and AAB
+        run: |
+          gradle wrapper --gradle-version 8.2
+          ./gradlew assembleRelease bundleRelease
+
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: AusBuild-Pro-V4
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: AusBuild-Pro-V4-Release-APK
+          path: app/build/outputs/apk/release/app-release.apk
 
-      - name: Rename and Release APK
-        run: |
-          cp app/build/outputs/apk/debug/app-debug.apk AusBuild-Pro-V4.apk
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload Release AAB (for Google Play)
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: v4.0.3-android
-          name: "AusBuild Pro V4.0.3 - Android"
-          body: |
-            ## AusBuild Pro V4.0.3 - Android APK
+          name: AusBuild-Pro-V4-Release-AAB
+          path: app/build/outputs/bundle/release/app-release.aab
 
-            **Changes in v4.0.3:**
-            - Fixed: AI Image Generation uses Pollinations.ai (free, no API key)
-            - Fixed: No more grey screen verification popup
-            - Fixed: All tabs respond to taps on mobile
-            - Fixed: Calculator updates in real-time
-            - Full responsive mobile layout
-            - Design AI with real FLUX AI image generation
-            - Complete Pro version: no watermark, no trial banners
-
-            **Install:** Download AusBuild-Pro-V4.apk and install on Android.
-          files: AusBuild-Pro-V4.apk
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
