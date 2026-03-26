@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d1b3e">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d1b3e'/><text x='50' y='65' font-size='60' font-weight='bold' fill='%234a9eff' text-anchor='middle' font-family='Arial'>A</text></svg>" />
+<title>AusBuild Pro V4</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwindcss.config={theme:{extend:{colors:{navy:{'50':'#e6eaf2','100':'#c0c9de','200':'#96a5c8','300':'#6c81b2','400':'#4d66a2','500':'#2e4b93','600':'#29448b','700':'#1f3a80','800':'#173175','900':'#0d1b3e'}}}}}</script>
+<noscript>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</noscript>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; }
+  canvas { cursor: crosshair; }
+  .cost-row:hover { background: #f0f4ff; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .animate-pulse { animation: pulse 2s infinite; }
+  .gradient-bg { background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5e 100%); }
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    nav { flex-wrap: wrap; height: auto !important; padding: 8px 12px !important; gap: 6px; }
+    nav > div:first-child { width: 100%; text-align: center; font-size: 14px !important; }
+    #nav-tabs { width: 100%; display: flex; justify-content: center; gap: 4px; overflow-x: auto; }
+    #nav-tabs .tab-btn { padding: 6px 12px !important; font-size: 11px !important; white-space: nowrap; }
+    nav > div:last-child { display: none; }
+    #tab-calc > div, #tab-design > div, #tab-quote > div {
+      flex-direction: column !important; overflow-y: auto !important; height: auto !important;
+    }
+    body { overflow: auto !important; height: auto !important; min-height: 100vh; }
+    .flex-1.overflow-hidden { overflow: auto !important; height: auto !important; }
+    .tab-content.active { height: auto !important; min-height: calc(100vh - 80px); overflow-y: auto !important; }
+    #tab-calc > div > div:first-child,
+    #tab-quote > div > div:first-child {
+      width: 100% !important; max-width: 100% !important;
+      border-right: none !important; border-bottom: 1px solid #e5e7eb;
+    }
+    #tab-calc > div > div:last-child,
+    #tab-quote > div > div:last-child { width: 100% !important; }
+    #tab-design > div > div:first-child {
+      width: 100% !important; min-height: 45vh; max-height: 50vh;
+      border-right: none !important; border-bottom: 2px solid #4f46e5;
+    }
+    #tab-design > div > div:last-child { width: 100% !important; min-height: 50vh; }
+    #tab-design .draw-tool { padding: 4px 6px !important; font-size: 10px !important; }
+    #tab-design .bg-white.border-b { flex-wrap: wrap; gap: 3px !important; padding: 4px 6px !important; }
+    #penWidth { font-size: 10px !important; padding: 2px 4px !important; }
+    #penColor { width: 22px !important; height: 22px !important; }
+    #tab-design .view-btn { padding: 3px 6px !important; font-size: 9px !important; }
+    #aiPromptInput { font-size: 11px !important; min-height: 36px !important; max-height: 60px !important; }
+    #generateBtn { min-width: 65px !important; padding: 4px 8px !important; font-size: 10px !important; }
+    select, input, button { font-size: 14px !important; min-height: 36px; }
+    .grid-cols-3 { grid-template-columns: 1fr !important; }
+    .grid-cols-2 { grid-template-columns: 1fr !important; }
+    table { font-size: 11px !important; }
+    table th, table td { padding: 4px 6px !important; }
+  }
+  @media (max-width: 400px) {
+    #nav-tabs .tab-btn { padding: 4px 8px !important; font-size: 10px !important; }
+    nav > div:first-child { font-size: 12px !important; }
+    #tab-design .draw-tool { font-size: 9px !important; padding: 3px 5px !important; }
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-900 h-screen flex flex-col overflow-hidden">
+
+<!-- MODAL: About/Info -->
+<div id="aboutModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="text-2xl font-bold text-navy-900 mb-3">AusBuild Pro V4</h2>
+    <p class="text-sm text-gray-600 mb-4">
+      Professional lot yield calculator and design tool for Australian residential development.
+    </p>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-gray-700">
+      <p><strong>Version:</strong> 4.0 (Professional)</p>
+      <p><strong>Region:</strong> Western Australia R-Codes 2024</p>
+      <p><strong>Features:</strong> Lot Yield Calculation, Design Canvas, Budget Estimation</p>
+    </div>
+    <div class="space-y-2 text-xs text-gray-600 mb-4">
+      <p>This application helps developers:</p>
+      <ul class="list-disc ml-4 space-y-1">
+        <li>Calculate optimal lot yields based on R-Code regulations</li>
+        <li>Design site layouts with architectural visualization</li>
+        <li>Estimate project budgets and development costs</li>
+        <li>Verify compliance with local planning requirements</li>
+      </ul>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeAboutModal()" class="flex-1 bg-navy-900 text-white py-2 rounded-lg font-semibold hover:bg-navy-800 transition">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<nav class="gradient-bg text-white px-5 flex items-center justify-between h-12 z-50 flex-shrink-0">
+  <div class="text-lg font-extrabold tracking-wide">
+    Aus<span class="text-blue-300">Build</span> Pro <sup class="text-[9px] opacity-50">V4</sup>
+  </div>
+  <div class="flex gap-1" id="nav-tabs">
+    <button onclick="switchTab('calc')" data-tab="calc" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35">ð Lot Yield</button>
+    <button onclick="switchTab('design')" data-tab="design" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">ð¨ Design AI</button>
+    <button onclick="switchTab('quote')" data-tab="quote" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">ð° Budget Estimate</button>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="text-[10px] opacity-50">R-Codes 2024 | DC 2.2 | AIQS</span>
+    <button onclick="openAboutModal()" class="px-3 py-1 text-xs bg-blue-500 rounded-full hover:bg-blue-600">Info</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="flex-1 overflow-hidden">
+
+<!-- ===== TAB 1: LOT YIELD ===== -->
+<div id="tab-calc" class="tab-content active h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">ð Lot Yield Calculator</h2>
+      <p class="text-xs text-gray-500 mb-4">WA R-Codes Volume 1 (March 2024)</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Code System</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="codeSystem" onchange="calcYield()">
+            <option value="wa">WA R-Codes</option>
+            <option value="sa" disabled>SA (Coming Soon)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">R-Code Density</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="rCode" onchange="calcYield()">
+            <option value="R20">R20 â Low Density</option>
+            <option value="R25">R25 â Low-Medium</option>
+            <option value="R30" selected>R30 â Medium</option>
+            <option value="R35">R35 â Medium</option>
+            <option value="R40">R40 â Medium-High</option>
+            <option value="R60">R60 â High</option>
+            <option value="R80">R80 â Very High</option>
+            <option value="R100">R100 â Multi</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Dwelling Type</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="dwType" onchange="calcYield()">
+            <option value="single">Single House</option>
+            <option value="grouped">Grouped Dwelling</option>
+            <option value="multiple">Multiple Dwelling</option>
+          </select>
+        </div>
+        <hr class="my-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Total Area (mÂ²)</label>
+            <input type="number" value="850" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="totalArea" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Frontage (m)</label>
+            <input type="number" value="20" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="frontage" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Depth (m)</label>
+            <input type="number" value="42.5" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="depth" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Truncation (mÂ²)</label>
+            <input type="number" value="0" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="truncation" onchange="calcYield()">
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isCorner" onchange="calcYield()"> Corner Lot</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isBattleaxe" onchange="calcYield()"> Battle-axe</label>
+        </div>
+        <button onclick="calcYield()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          â¡ Calculate Yield
+        </button>
+      </div>
+    </div>
+    <!-- Right Panel: Results -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Lot Count</div>
+            <div class="text-3xl font-bold text-navy-900" id="lotCount">2</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Avg Per Lot</div>
+            <div class="text-2xl font-bold text-blue-600" id="avgPerLot">425 mÂ²</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Effective Area</div>
+            <div class="text-2xl font-bold text-green-600" id="effArea">850 mÂ²</div>
+          </div>
+        </div>
+        <!-- Compliance Table -->
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="font-bold text-sm mb-3">ð R-Code Compliance Check</h3>
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50"><th class="text-left p-2">Clause</th><th class="text-left p-2">Requirement</th><th class="text-left p-2">Actual</th><th class="p-2">Status</th></tr></thead>
+            <tbody id="complianceTable">
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Min Lot Area</td><td class="p-2" id="comp-min-req">â¥ 300 mÂ²</td><td class="p-2" id="comp-min-actual">425 mÂ²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-min-status">â PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Avg Lot Area</td><td class="p-2" id="comp-avg-req">â¥ 350 mÂ²</td><td class="p-2" id="comp-avg-actual">425 mÂ²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-avg-status">â PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.2 Min Frontage</td><td class="p-2" id="comp-front-req">â¥ 10 m</td><td class="p-2" id="comp-front-actual">20 m</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-front-status">â PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.1 Primary Setback</td><td class="p-2" id="comp-setback-req">â¥ 4 m</td><td class="p-2" id="comp-setback-actual">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-setback-status">â³ TBD</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.3 Open Space</td><td class="p-2" id="comp-open-req">â¥ 50%</td><td class="p-2" id="comp-open-actual">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-open-status">â³ TBD</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: DESIGN (50/50 split) ===== -->
+<div id="tab-design" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- LEFT 50%: Drawing Canvas (blank for user to draw) -->
+    <div class="w-1/2 flex flex-col border-r-2 border-gray-300">
+      <!-- Toolbar -->
+      <div class="bg-white border-b px-3 py-2 flex items-center gap-2 flex-shrink-0 flex-wrap">
+        <button onclick="setTool('draw', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-navy-900 text-white font-bold">âï¸ Draw</button>
+        <button onclick="setTool('rect', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">â¬ Room</button>
+        <button onclick="setTool('line', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">â Wall</button>
+        <button onclick="setTool('door', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">ðª Door</button>
+        <button onclick="setTool('window', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">ðª Window</button>
+        <button onclick="setTool('erase', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">ðï¸ Erase</button>
+        <input type="number" id="penWidth" value="3" min="1" max="50" autocomplete="off" style="width:50px;" class="border rounded px-2 py-1 text-xs">
+        <input type="color" id="penColor" value="#222222" style="width:35px; height:32px; cursor:pointer;">
+        <button onclick="undoCanvas()" class="px-2 py-1 text-xs rounded bg-blue-100 hover:bg-blue-200 font-bold">â¶ Undo</button>
+        <button onclick="redoCanvas()" class="px-2 py-1 text-xs rounded bg-blue-100 hover:bg-blue-200 font-bold">â· Redo</button>
+        <button onclick="clearCanvas()" class="px-2 py-1 text-xs rounded bg-red-100 hover:bg-red-200 font-bold text-red-700">Clear</button>
+      </div>
+      <!-- Canvas -->
+      <canvas id="drawCanvas" class="flex-1 bg-white cursor-crosshair"></canvas>
+    </div>
+    <!-- RIGHT 50%: 3D Renders + AI -->
+    <div class="w-1/2 flex flex-col bg-gray-50 border-l">
+      <!-- View Mode Buttons -->
+      <div class="bg-white border-b px-3 py-2 flex gap-2 flex-shrink-0">
+        <button onclick="setViewMode('floor', this)" class="view-btn px-3 py-1 text-xs font-bold rounded bg-white/15 text-white">ð Floor</button>
+        <button onclick="setViewMode('ext', this)" class="view-btn px-3 py-1 text-xs font-bold rounded text-white/50">ð  Exterior</button>
+        <button onclick="setViewMode('int', this)" class="view-btn px-3 py-1 text-xs font-bold rounded text-white/50">ðï¸ Interior</button>
+      </div>
+      <!-- Render Area -->
+      <div id="renderArea" class="flex-1 flex items-center justify-center overflow-auto bg-gray-100 p-3">
+        <svg id="floorRender" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" style="width:100%;max-height:100%;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+          <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="#999">Floor plan renders here</text>
+        </svg>
+      </div>
+      <!-- AI Prompt -->
+      <div class="bg-white border-t px-3 py-2 flex gap-2 flex-shrink-0">
+        <textarea id="aiPromptInput" class="flex-1 border rounded px-2 py-1 text-xs resize-none" placeholder="Describe the design..."></textarea>
+        <button id="generateBtn" onclick="generateAIRender()" class="px-3 py-1 text-xs bg-blue-500 text-white rounded font-bold hover:bg-blue-600">â¨ Generate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: BUDGET ESTIMATE ===== -->
+<div id="tab-quote" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">ð° Budget Estimator</h2>
+      <p class="text-xs text-gray-500 mb-4">Cost breakdown by construction phase</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-2">Project Phase</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="site" checked> Site Preparation</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="foundation"> Foundation & Structure</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="services"> Services & Utilities</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="finishing"> Finishing & Landscaping</label>
+          </div>
+        </div>
+        <hr>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Number of Lots</label>
+          <input type="number" value="2" min="1" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="budgetLots" onchange="calcBudget()">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Cost Per mÂ² ($)</label>
+          <input type="number" value="1200" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="costPerM2" onchange="calcBudget()">
+        </div>
+        <button onclick="calcBudget()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          ð¡ Estimate Budget
+        </button>
+      </div>
+    </div>
+    <!-- Right Panel: Cost Breakdown -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-bold text-sm mb-3">Project Cost Summary</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Total Area</span>
+              <span class="font-semibold" id="budgetArea">850 mÂ²</span>
+            </div>
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Construction Cost</span>
+              <span class="font-semibold text-green-600" id="budgetConstruction">$1,020,000</span>
+            </div>
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Contingency (10%)</span>
+              <span class="font-semibold text-amber-600" id="budgetContingency">$102,000</spam¸ø(ð½¥Øø(ñ¥Ø±ÍÌô±à©ÕÍÑ¥äµÑÝ¸µ¹Ùä´äÀÀ¼ÄÀÀ´ÈÉ½Õ¹½ÉÈ½ÉÈµ¹Ùä´äÀÀ¼ÈÀø(ñÍÁ¸±ÍÌô½¹Ðµ½±ùQ½Ñ°	ÕÐð½ÍÁ¸ø(ñÍÁ¸±ÍÌô½¹Ðµ½±ÑáÐµ¹Ùä´äÀÀ¥ôÕÑQ½Ñ°øÄ°ÄÈÈ°ÀÀÀð½ÍÁ¸ø(ð½¥Øø(ð½¥Øø(ð½¥Øø(ñ¥Ø±ÍÌôµÝ¡¥ÑÉ½Õ¹µá°Í¡½ÜµÍ´À´Ðø(ñ Ì±ÍÌô½¹Ðµ½±ÑáÐµÍ´µ´Ìù
+½ÍÐAÈ1½Ðð½ Ìø(ñ¥Ø±ÍÌôÑáÐµ¹ÑÈø(ñ¥Ø±ÍÌôÑáÐ´Ñá°½¹Ðµ½±ÑáÐµ±Õ´ØÀÀ¥ô½ÍÑAÉ1½ÐøÔØÄ°ÀÀÀð½¥Øø(ñÀ±ÍÌôÑáÐµáÌÑáÐµÉä´ÔÀÀµÐ´ÄùAÈÝ±±¥¹Õ¹¥Ðð½Àø(ð½¥Øø(ð½¥Øø(ð½¥Øø(ð½¥Øø(ð½¥Øø(ð½¥Øø((ð½¥Øø(ð½½äø((ñÍÉ¥ÁÐø(¼¼ôôôôôQ=MP9=Q%%
+Q%=8ôôôôô)Õ¹Ñ¥½¸Í¡½ÝQ½ÍÐ¡µÍ°ÕÉÑ¥½¸ôÌÀÀÀ¤ì(±ÐÐô½Õµ¹Ð¹Ñ±µ¹Ñ	å% ÁÀµÑ½ÍÐ¤ì(¥ Ð¤ì(Ðô½Õµ¹Ð¹ÉÑ±µ¹Ð ¥Ø¤ì(Ð¹¥ôÁÀµÑ½ÍÐì(Ð¹ÍÑå±¹ÍÍQáÐôÁ½Í¥Ñ¥½¸é¥áí½ÑÑ½´èàÁÁàí±ÐèÔÀíÑÉ¹Í½É´éÑÉ¹Í±Ñ` ´ÔÀ¤í­É½Õ¹èÅÍàÀí½±½ÈéÝ¡¥ÑíÁ¥¹èÄÉÁàÈÑÁàí½ÉÈµÉ¥ÕÌèáÁàí½¹ÐµÍ¥éèÄÑÁàíèµ¥¹àèäääääí½Á¥ÑäèÀíÑÉ¹Í¥Ñ¥½¸é½Á¥ÑäÀ¸ÍÌíµàµÝ¥Ñ èäÀíÑáÐµ±¥¸é¹ÑÈí½àµÍ¡½ÜèÀÑÁàÄÉÁàÉ À°À°À°À¸Ì¤ì(½Õµ¹Ð¹½ä¹ÁÁ¹
+¡¥±¡Ð¤ì(ô(Ð¹ÑáÑ
+½¹Ñ¹ÐôµÍì(Ð¹ÍÑå±¹½Á¥ÑäôÄì(±ÉQ¥µ½ÕÐ¡Ð¹}Ñ¥µÈ¤ì(Ð¹}Ñ¥µÈôÍÑQ¥µ½ÕÐ  ¤ôøìÐ¹ÍÑå±¹½Á¥ÑäôÀìô°ÕÉÑ¥½¸¤ì)ô((¼¼ôôôôô1=	0MQQôôôôô)½¹ÍÐI
+=Lôì(HÈÀèíµ¥¸èÌÔÀ±ÙèÐÔÀ±É½¹ÐèÄÀ±ÍÑ¬èØ±½Á¸èÔÁô°(HÈÔèíµ¥¸èÌÀÀ±ÙèÌÔÀ±É½¹ÐèÄÀ±ÍÑ¬èÐ±½Á¸èÔÁô°(HÌÀèíµ¥¸èÈØÀ±ÙèÌÀÀ±É½¹ÐèÄÀ±ÍÑ¬èÐ±½Á¸èÔÁô°(HÌÔèíµ¥¸èÈÈÀ±ÙèÈØÀ±É½¹Ðèà±ÍÑ¬èÐ±½Á¸èÔÁô°(HÐÀèíµ¥¸èÄàÀ±ÙèÈÈÀ±É½¹Ðèà±ÍÑ¬èÌ±½Á¸èÐÕô°(HØÀèíµ¥¸èÄÔÀ±ÙèÄàÀ±É½¹ÐèÜ±ÍÑ¬èÈ±½Á¸èÐÁô°(HàÀèíµ¥¸èÄÈÀ±ÙèÄÔÀ±É½¹ÐèØ±ÍÑ¬èÈ±½Á¸èÌÕô°(HÄÀÀéíµ¥¸èÄÀÀ±ÙèÄÈÀ±É½¹ÐèÔ±ÍÑ¬èÄ¸Ô±½Á¸èÌÁô°)ôì((¼¼ôôôôôQM]%Q
+!%9ôôôôô)Õ¹Ñ¥½¸ÍÝ¥Ñ¡Q¡Ñ9µ¤ì(½Õµ¹Ð¹ÅÕÉåM±Ñ½É±° ¹Ñµ½¹Ñ¹Ð¤¹½É ¡ÐôøÐ¹±ÍÍ1¥ÍÐ¹Éµ½Ù Ñ¥Ù¤¤ì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% Ñ´¬Ñ9µ¤¹±ÍÍ1¥ÍÐ¹ Ñ¥Ù¤ì(½Õµ¹Ð¹ÅÕÉåM±Ñ½É±° ¹ÑµÑ¸¤¹½É ¡ôøì(¥¡¹ÑÑÑÉ¥ÕÑ ÑµÑ¤ôôôÑ9µ¤ì(¹±ÍÍ1¥ÍÐ¹ µÝ¡¥Ñ¼ÈÀ°½ÉÈµÝ¡¥Ñ¼ÌÔ¤ì(¹±ÍÍ1¥ÍÐ¹Éµ½Ù ÑáÐµÝ¡¥Ñ¼ÜÀ¤ì(ô±Íì(¹±ÍÍ1¥ÍÐ¹Éµ½Ù µÝ¡¥Ñ¼ÈÀ°½ÉÈµÝ¡¥Ñ¼ÌÔ¤ì(¹±ÍÍ1¥ÍÐ¹ ÑáÐµÝ¡¥Ñ¼ÜÀ¤ì(ô(ô¤ì)ô((¼¼ôôôôô5=0U9
+Q%=9Lôôôôô)Õ¹Ñ¥½¸½Á¹½ÕÑ5½° ¤ì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½ÕÑ5½°¤¹±ÍÍ1¥ÍÐ¹ Ñ¥Ù¤ì)ô()Õ¹Ñ¥½¸±½Í½ÕÑ5½° ¤ì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½ÕÑ5½°¤¹±ÍÍ1¥ÍÐ¹Éµ½Ù Ñ¥Ù¤ì)ô((¼¼ôôôôôe%1
+1
+U1Q=H¡	Õ¥áÌÄ´Ü¤ôôôôô)Õ¹Ñ¥½¸±e¥± ¤ì(¼¼	ÕÄ°Èè%¹ÁÕÐÙ±¥Ñ¥½¸¹98¡¹±¥¹(½¹ÍÐ½ô½Õµ¹Ð¹Ñ±µ¹Ñ	å% É
+½¤¹Ù±Õì(±ÐÉôÁÉÍ±½Ð¡½Õµ¹Ð¹Ñ±µ¹Ñ	å% Ñ½Ñ±É¤¹Ù±Õ¤ñðÀì(±ÐÉ½¹ÐôÁÉÍ±½Ð¡½Õµ¹Ð¹Ñ±µ¹Ñ	å% É½¹Ñ¤¹Ù±Õ¤ñðÀì(±ÐÁÑ ôÁÉÍ±½Ð¡½Õµ¹Ð¹Ñ±µ¹Ñ	å% ÁÑ ¤¹Ù±Õ¤ñðÀì(±ÐÑÉÕ¹Ñ¥½¸ôÁÉÍ±½Ð¡½Õµ¹Ð¹Ñ±µ¹Ñ	å% ÑÉÕ¹Ñ¥½¸¤¹Ù±Õ¤ñðÀì((¼¼
+±µÀ¹Ñ¥ÙÙ±ÕÌÑ¼À(Éô5Ñ ¹µà À°É¤ì(É½¹Ðô5Ñ ¹µà À°É½¹Ð¤ì(ÁÑ ô5Ñ ¹µà À°ÁÑ ¤ì(ÑÉÕ¹Ñ¥½¸ô5Ñ ¹µà À°ÑÉÕ¹Ñ¥½¸¤ì((¼¼	ÕÔèÁÁ±äÑÉÕ¹Ñ¥½¸Ñ¼Ñ¥ÙÉ(±ÐÑ¥ÙÉô5Ñ ¹µà À°É´ÑÉÕ¹Ñ¥½¸¤ì((¼¼	ÕÌèI½É¹È±½Ð¡­½à¹ÁÁ±äÈÀ½¹ÕÌÑ¼µ¥¸±½ÐÉ(½¹ÍÐ¥Í
+½É¹Èô½Õµ¹Ð¹Ñ±µ¹Ñ	å% ¥Í
+½É¹È¤¹¡­ì(±ÐÉô)M=8¹ÁÉÍ¡)M=8¹ÍÑÉ¥¹¥ä¡I
+=Mm½tñðI
+=L¹HÌÀ¤¤ì(¥¡¥Í
+½É¹È¤ì(¼¼]Hµ
+½½É¹È±½Ð½¹ÕÌèÉÕµ¥¸±½ÐÉäøÈÀ(É¹µ¥¸ô5Ñ ¹É½Õ¹¡É¹µ¥¸¨À¸à¤ì(É¹Ùô5Ñ ¹É½Õ¹¡É¹Ù¨À¸à¤ì(ô((¼¼
+±Õ±Ñ±½ÑÌÝ¥Ñ 98±±¬(½¹ÍÐ±½ÑÌô5Ñ ¹µà Ä°5Ñ ¹±½½È¡Ñ¥ÙÉ¼É¹Ù¤¤ñðÄì(½¹ÍÐÙô±½ÑÌøÀü5Ñ ¹É½Õ¹¡Ñ¥ÙÉ¼±½ÑÌ¤èÀì((½Õµ¹Ð¹Ñ±µ¹Ñ	å% ±½Ñ
+½Õ¹Ð¤¹ÑáÑ
+½¹Ñ¹Ðô±½ÑÌì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ÙAÉ1½Ð¤¹ÑáÑ
+½¹Ñ¹Ðô¡ÙñðÀ¤¬·
+Èì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% É¤¹ÑáÑ
+½¹Ñ¹Ðô¡Ñ¥ÙÉñðÀ¤¬·
+Èì((¼¼	ÕÜèUÁÑ½µÁ±¥¹Ñ±å¹µ¥±±ä(ÕÁÑ
+½µÁ±¥¹Q±¡É°Ñ¥ÙÉ°É½¹Ð°Ù°±½ÑÌ¤ì)ô((¼¼	ÕÜèå¹µ¥½µÁ±¥¹Ñ±ÕÁÑ)Õ¹Ñ¥½¸ÕÁÑ
+½µÁ±¥¹Q±¡É°É°É½¹Ð°Ù1½Ð°±½Ñ
+½Õ¹Ð¤ì(¼¼5¥¸±½ÐÉ(½¹ÍÐµ¥¹IÄôÉ¹µ¥¸ì(½¹ÍÐµ¥¹MÑÑÕÌôÙ1½Ðøôµ¥¹IÄüñÍÁ¸±ÍÌôµÉ¸´ÄÀÀÑáÐµÉ¸´ÜÀÀÁà´ÈÁä´À¸ÔÉ½Õ¹µÕ±°ÑáÐµáÌ½¹Ðµ½±ûrLAMLð½ÍÁ¸øèñÍÁ¸±ÍÌôµÉ´ÄÀÀÑáÐµÉ´ÜÀÀÁà´ÈÁä´À¸ÔÉ½Õ¹µÕ±°ÑáÐµáÌ½¹Ðµ½±ûr\%0ð½ÍÁ¸øì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµµ¥¸µÉÄ¤¹ÑáÑ
+½¹Ñ¹Ðô&¬µ¥¹IÄ¬·
+Èì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµµ¥¸µÑÕ°¤¹ÑáÑ
+½¹Ñ¹ÐôÙ1½Ð¬·
+Èì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµµ¥¸µÍÑÑÕÌ¤¹¥¹¹É!Q50ôµ¥¹MÑÑÕÌì((¼¼Ù±½ÐÉ(½¹ÍÐÙIÄôÉ¹Ùì(½¹ÍÐÙMÑÑÕÌôÙ1½ÐøôÙIÄüñÍÁ¸±ÍÌôµÉ¸´ÄÀÀÑáÐµÉ¸´ÜÀÀÁà´ÈÁä´À¸ÔÉ½Õ¹µÕ±°ÑáÐµáÌ½¹Ðµ½±ûrLAMLð½ÍÁ¸øèñÍÁ¸±ÍÌôµÉ´ÄÀÀÑáÐµÉ´ÜÀÀÁà´ÈÁä´À¸ÔÉ½Õ¹µÕ±°ÑáÐµáÌ½¹Ðµ½±ûr\%0ð½ÍÁ¸øì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµÙµÉÄ¤¹ÑáÑ
+½¹Ñ¹Ðô&¬ÙIÄ¬·
+Èì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµÙµÑÕ°¤¹ÑáÑ
+½¹Ñ¹ÐôÙ1½Ð¬·
+Èì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµÙµÍÑÑÕÌ¤¹¥¹¹É!Q50ôÙMÑÑÕÌì((¼¼É½¹Ñ(½¹ÍÐÉ½¹ÑIÄôÉ¹É½¹Ðì(½¹ÍÐÉ½¹ÑMÑÑÕÌôÉ½¹ÐøôÉ½¹ÑIÄüñÍÁ¸±ÍÌôµÉ¸´ÄÀÀÑáÐµÉ¸´ÜÀÀÁà´ÈÁä´À¸ÔÉ½Õ¹µÕ±°ÑáÐµáÌ½¹Ðµ½±ûrLAMLð½ÍÁ¸øèñÍÁ¸±ÍÌôµÉ´ÄÀÀÑáÐµÉ´ÜÀÀÁà´ÈÁä´À¸ÔÉ½Õ¹µÕ±°ÑáÐµáÌ½¹Ðµ½±ûr\%0ð½ÍÁ¸øì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµÉ½¹ÐµÉÄ¤¹ÑáÑ
+½¹Ñ¹Ðô&¬É½¹ÑIÄ¬´ì(½Õµ¹Ð¹Ñ±µ¹Ñ	å% ½µÀµÉ½¹ÐµÑÕ°¤¹ÑáÑ
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d1b3e">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d1b3e'/><text x='50' y='65' font-size='60' font-weight='bold' fill='%234a9eff' text-anchor='middle' font-family='Arial'>A</text></svg>" />
+<title>AusBuild Pro V4</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwindcss.config={theme:{extend:{colors:{navy:{'50':'#e6eaf2','100':'#c0c9de','200':'#96a5c8','300':'#6c81b2','400':'#4d66a2','500':'#2e4b93','600':'#29448b','700':'#1f3a80','800':'#173175','900':'#0d1b3e'}}}}}</script>
+<noscript>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</noscript>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; }
+  canvas { cursor: crosshair; }
+  .cost-row:hover { background: #f0f4ff; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .animate-pulse { animation: pulse 2s infinite; }
+  .gradient-bg { background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5e 100%); }
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    nav { flex-wrap: wrap; height: auto !important; padding: 8px 12px !important; gap: 6px; }
+    nav > div:first-child { width: 100%; text-align: center; font-size: 14px !important; }
+    #nav-tabs { width: 100%; display: flex; justify-content: center; gap: 4px; overflow-x: auto; }
+    #nav-tabs .tab-btn { padding: 6px 12px !important; font-size: 11px !important; white-space: nowrap; }
+    nav > div:last-child { display: none; }
+    #tab-calc > div, #tab-design > div, #tab-quote > div {
+      flex-direction: column !important; overflow-y: auto !important; height: auto !important;
+    }
+    body { overflow: auto !important; height: auto !important; min-height: 100vh; }
+    .flex-1.overflow-hidden { overflow: auto !important; height: auto !important; }
+    .tab-content.active { height: auto !important; min-height: calc(100vh - 80px); overflow-y: auto !important; }
+    #tab-calc > div > div:first-child,
+    #tab-quote > div > div:first-child {
+      width: 100% !important; max-width: 100% !important;
+      border-right: none !important; border-bottom: 1px solid #e5e7eb;
+    }
+    #tab-calc > div > div:last-child,
+    #tab-quote > div > div:last-child { width: 100% !important; }
+    #tab-design > div > div:first-child {
+      width: 100% !important; min-height: 45vh; max-height: 50vh;
+      border-right: none !important; border-bottom: 2px solid #4f46e5;
+    }
+    #tab-design > div > div:last-child { width: 100% !important; min-height: 50vh; }
+    #tab-design .draw-tool { padding: 4px 6px !important; font-size: 10px !important; }
+    #tab-design .bg-white.border-b { flex-wrap: wrap; gap: 3px !important; padding: 4px 6px !important; }
+    #penWidth { font-size: 10px !important; padding: 2px 4px !important; }
+    #penColor { width: 22px !important; height: 22px !important; }
+    #tab-design .view-btn { padding: 3px 6px !important; font-size: 9px !important; }
+    #aiPromptInput { font-size: 11px !important; min-height: 36px !important; max-height: 60px !important; }
+    #generateBtn { min-width: 65px !important; padding: 4px 8px !important; font-size: 10px !important; }
+    select, input, button { font-size: 14px !important; min-height: 36px; }
+    .grid-cols-3 { grid-template-columns: 1fr !important; }
+    .grid-cols-2 { grid-template-columns: 1fr !important; }
+    table { font-size: 11px !important; }
+    table th, table td { padding: 4px 6px !important; }
+  }
+  @media (max-width: 400px) {
+    #nav-tabs .tab-btn { padding: 4px 8px !important; font-size: 10px !important; }
+    nav > div:first-child { font-size: 12px !important; }
+    #tab-design .draw-tool { font-size: 9px !important; padding: 3px 5px !important; }
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-900 h-screen flex flex-col overflow-hidden">
+
+<!-- MODAL: About/Info -->
+<div id="aboutModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="text-2xl font-bold text-navy-900 mb-3">AusBuild Pro V4</h2>
+    <p class="text-sm text-gray-600 mb-4">
+      Professional lot yield calculator and design tool for Australian residential development.
+    </p>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-gray-700">
+      <p><strong>Version:</strong> 4.0 (Professional)</p>
+      <p><strong>Region:</strong> Western Australia R-Codes 2024</p>
+      <p><strong>Features:</strong> Lot Yield Calculation, Design Canvas, Budget Estimation</p>
+    </div>
+    <div class="space-y-2 text-xs text-gray-600 mb-4">
+      <p>This application helps developers:</p>
+      <ul class="list-disc ml-4 space-y-1">
+        <li>Calculate optimal lot yields based on R-Code regulations</li>
+        <li>Design site layouts with architectural visualization</li>
+        <li>Estimate project budgets and development costs</li>
+        <li>Verify compliance with local planning requirements</li>
+      </ul>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeAboutModal()" class="flex-1 bg-navy-900 text-white py-2 rounded-lg font-semibold hover:bg-navy-800 transition">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<nav class="gradient-bg text-white px-5 flex items-center justify-between h-12 z-50 flex-shrink-0">
+  <div class="text-lg font-extrabold tracking-wide">
+    Aus<span class="text-blue-300">Build</span> Pro <sup class="text-[9px] opacity-50">V4</sup>
+  </div>
+  <div class="flex gap-1" id="nav-tabs">
+    <button onclick="switchTab('calc')" data-tab="calc" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35">📐 Lot Yield</button>
+    <button onclick="switchTab('design')" data-tab="design" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">🎨 Design AI</button>
+    <button onclick="switchTab('quote')" data-tab="quote" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">💰 Budget Estimate</button>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="text-[10px] opacity-50">R-Codes 2024 | DC 2.2 | AIQS</span>
+    <button onclick="openAboutModal()" class="px-3 py-1 text-xs bg-blue-500 rounded-full hover:bg-blue-600">Info</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="flex-1 overflow-hidden">
+
+<!-- ===== TAB 1: LOT YIELD ===== -->
+<div id="tab-calc" class="tab-content active h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">📐 Lot Yield Calculator</h2>
+      <p class="text-xs text-gray-500 mb-4">WA R-Codes Volume 1 (March 2024)</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Code System</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="codeSystem" onchange="calcYield()">
+            <option value="wa">WA R-Codes</option>
+            <option value="sa" disabled>SA (Coming Soon)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">R-Code Density</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="rCode" onchange="calcYield()">
+            <option value="R20">R20 — Low Density</option>
+            <option value="R25">R25 — Low-Medium</option>
+            <option value="R30" selected>R30 — Medium</option>
+            <option value="R35">R35 — Medium</option>
+            <option value="R40">R40 — Medium-High</option>
+            <option value="R60">R60 — High</option>
+            <option value="R80">R80 — Very High</option>
+            <option value="R100">R100 — Multi</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Dwelling Type</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="dwType" onchange="calcYield()">
+            <option value="single">Single House</option>
+            <option value="grouped">Grouped Dwelling</option>
+            <option value="multiple">Multiple Dwelling</option>
+          </select>
+        </div>
+        <hr class="my-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Total Area (m²)</label>
+            <input type="number" value="850" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="totalArea" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Frontage (m)</label>
+            <input type="number" value="20" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="frontage" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Depth (m)</label>
+            <input type="number" value="42.5" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="depth" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Truncation (m²)</label>
+            <input type="number" value="0" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="truncation" onchange="calcYield()">
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isCorner" onchange="calcYield()"> Corner Lot</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isBattleaxe" onchange="calcYield()"> Battle-axe</label>
+        </div>
+        <button onclick="calcYield()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          ⚡ Calculate Yield
+        </button>
+      </div>
+    </div>
+    <!-- Right Panel: Results -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Lot Count</div>
+            <div class="text-3xl font-bold text-navy-900" id="lotCount">2</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Avg Per Lot</div>
+            <div class="text-2xl font-bold text-blue-600" id="avgPerLot">425 m²</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Effective Area</div>
+            <div class="text-2xl font-bold text-green-600" id="effArea">850 m²</div>
+          </div>
+        </div>
+        <!-- Compliance Table -->
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="font-bold text-sm mb-3">📋 R-Code Compliance Check</h3>
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50"><th class="text-left p-2">Clause</th><th class="text-left p-2">Requirement</th><th class="text-left p-2">Actual</th><th class="p-2">Status</th></tr></thead>
+            <tbody id="complianceTable">
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Min Lot Area</td><td class="p-2" id="comp-min-req">≥ 300 m²</td><td class="p-2" id="comp-min-actual">425 m²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-min-status">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Avg Lot Area</td><td class="p-2" id="comp-avg-req">≥ 350 m²</td><td class="p-2" id="comp-avg-actual">425 m²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-avg-status">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.2 Min Frontage</td><td class="p-2" id="comp-front-req">≥ 10 m</td><td class="p-2" id="comp-front-actual">20 m</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-front-status">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.1 Primary Setback</td><td class="p-2" id="comp-setback-req">≥ 4 m</td><td class="p-2" id="comp-setback-actual">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-setback-status">⏳ TBD</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.3 Open Space</td><td class="p-2" id="comp-open-req">≥ 50%</td><td class="p-2" id="comp-open-actual">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-open-status">⏳ TBD</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: DESIGN (50/50 split) ===== -->
+<div id="tab-design" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- LEFT 50%: Drawing Canvas (blank for user to draw) -->
+    <div class="w-1/2 flex flex-col border-r-2 border-gray-300">
+      <!-- Toolbar -->
+      <div class="bg-white border-b px-3 py-2 flex items-center gap-2 flex-shrink-0 flex-wrap">
+        <button onclick="setTool('draw', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-navy-900 text-white font-bold">✏️ Draw</button>
+        <button onclick="setTool('rect', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">⬜ Room</button>
+        <button onclick="setTool('line', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">━ Wall</button>
+        <button onclick="setTool('door', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🚪 Door</button>
+        <button onclick="setTool('window', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🪟 Window</button>
+        <button onclick="setTool('erase', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🗑️ Erase</button>
+        <input type="number" id="penWidth" value="3" min="1" max="50" autocomplete="off" style="width:50px;" class="border rounded px-2 py-1 text-xs">
+        <input type="color" id="penColor" value="#222222" style="width:35px; height:32px; cursor:pointer;">
+        <button onclick="undoCanvas()" class="px-2 py-1 text-xs rounded bg-blue-100 hover:bg-blue-200 font-bold">↶ Undo</button>
+        <button onclick="redoCanvas()" class="px-2 py-1 text-xs rounded bg-blue-100 hover:bg-blue-200 font-bold">↷ Redo</button>
+        <button onclick="clearCanvas()" class="px-2 py-1 text-xs rounded bg-red-100 hover:bg-red-200 font-bold text-red-700">Clear</button>
+      </div>
+      <!-- Canvas -->
+      <canvas id="drawCanvas" class="flex-1 bg-white cursor-crosshair"></canvas>
+    </div>
+    <!-- RIGHT 50%: 3D Renders + AI -->
+    <div class="w-1/2 flex flex-col bg-gray-50 border-l">
+      <!-- View Mode Buttons -->
+      <div class="bg-white border-b px-3 py-2 flex gap-2 flex-shrink-0">
+        <button onclick="setViewMode('floor', this)" class="view-btn px-3 py-1 text-xs font-bold rounded bg-white/15 text-white">📐 Floor</button>
+        <button onclick="setViewMode('ext', this)" class="view-btn px-3 py-1 text-xs font-bold rounded text-white/50">🏠 Exterior</button>
+        <button onclick="setViewMode('int', this)" class="view-btn px-3 py-1 text-xs font-bold rounded text-white/50">🛋️ Interior</button>
+      </div>
+      <!-- Render Area -->
+      <div id="renderArea" class="flex-1 flex items-center justify-center overflow-auto bg-gray-100 p-3">
+        <svg id="floorRender" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" style="width:100%;max-height:100%;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+          <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="#999">Floor plan renders here</text>
+        </svg>
+      </div>
+      <!-- AI Prompt -->
+      <div class="bg-white border-t px-3 py-2 flex gap-2 flex-shrink-0">
+        <textarea id="aiPromptInput" class="flex-1 border rounded px-2 py-1 text-xs resize-none" placeholder="Describe the design..."></textarea>
+        <button id="generateBtn" onclick="generateAIRender()" class="px-3 py-1 text-xs bg-blue-500 text-white rounded font-bold hover:bg-blue-600">✨ Generate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: BUDGET ESTIMATE ===== -->
+<div id="tab-quote" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">💰 Budget Estimator</h2>
+      <p class="text-xs text-gray-500 mb-4">Cost breakdown by construction phase</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-2">Project Phase</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="site" checked> Site Preparation</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="foundation"> Foundation & Structure</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="services"> Services & Utilities</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="finishing"> Finishing & Landscaping</label>
+          </div>
+        </div>
+        <hr>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Number of Lots</label>
+          <input type="number" value="2" min="1" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="budgetLots" onchange="calcBudget()">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Cost Per m² ($)</label>
+          <input type="number" value="1200" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="costPerM2" onchange="calcBudget()">
+        </div>
+        <button onclick="calcBudget()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          💡 Estimate Budget
+        </button>
+      </div>
+    </div>
+    <!-- Right Panel: Cost Breakdown -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-bold text-sm mb-3">Project Cost Summary</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Total Area</span>
+              <span class="font-semibold" id="budgetArea">850 m²</span>
+            </div>
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Construction Cost</span>
+              <span class="font-semibold text-green-600" id="budgetConstruction">$1,020,000</span>
+            </div>
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Contingency (10%)</span>
+              <span class="font-semibold text-amber-600" id="budgetContingency">$102,000</spam��(������������𽑥��(�������������؁�����􉙱������ѥ�䵉��ݕ�������������������ȁɽչ������ɑ�ȁ��ɑ�ȵ������������(�������������������������􉙽�е������Q�х��	Ց���������(�������������������������􉙽�е�����ѕ�е������������Ց���Q�х����İ��Ȱ���������(������������𽑥��(����������𽑥��(��������𽑥��(���������؁�����􉉜�ݡ�є�ɽչ����ᰁ͡���ܵʹ���Ј�(�����������́�����􉙽�е�����ѕ�еʹ����̈�
+��ЁA�ȁ1�����(�����������؁������ѕ�е���ѕȈ�(�������������؁������ѕ�д�ᰁ���е�����ѕ�е��Ք��������􉍽��A��1�Ј����İ���𽑥��(���������������������ѕ�е�́ѕ�е�Ʌ������дĈ�A�ȁ�ݕ������չ�����(����������𽑥��(��������𽑥��(������𽑥��(����𽑥��(��𽑥��(𽑥��((𽑥��(𽉽���((�͍ɥ���(��������Q=MP�9=Q%%
+Q%=8������)�չ�ѥ���͡��Q���С�͜����Ʌѥ����������(����ЁЀ􁑽�յ��й���������	�%�������ѽ��М��(�������Ф��(����Ѐ􁑽�յ��й�ɕ�ѕ�����Р���؜��(����й���􀝅���ѽ��М�(����й��屔����Q��Ѐ���ͥѥ��陥ᕐ퉽�ѽ�����������������Ʌ�͙�ɴ��Ʌ�ͱ�ѕ`������퉅���ɽչ��Ř̈́��퍽����ݡ�є������������������퉽ɑ�ȵɅ��������홽�еͥ�������赥����������������������Ʌ�ͥѥ�����������������ݥ�Ѡ�����ѕ�е�����鍕�ѕ�퉽�͡����������������ɝ�����������̤��(�������յ��й���久�����
+�����Ф�(���(��йѕ��
+��ѕ�Ѐ�͜�(��й��屔���������Ĝ�(�������Q�����Сй}ѥ��Ȥ�(��й}ѥ��Ȁ�͕�Q�����Р�������й��屔�����������������Ʌѥ����)�((��������1=	0�MQQ������)����ЁI
+=L���(��H�������������ٜ������ɽ������͕щ����ر���������(��H�������������ٜ������ɽ������͕щ����б���������(��H�������������ٜ������ɽ������͕щ����б���������(��H�������������ٜ������ɽ����͕щ����б���������(��H�������������ٜ������ɽ����͕щ����̱���������(��H�������������ٜ������ɽ���ܱ͕щ����ȱ���������(��H�������������ٜ������ɽ���ر͕щ����ȱ���������(��H��������������ٜ������ɽ���Ա͕щ����ĸԱ���������)��((��������Q�M]%Q
+!%9������)�չ�ѥ����ݥэ�Q���х�9������(�����յ��й�Օ��M����ѽ������х�����ѕ�М���������Ѐ���й�����1��йɕ��ٔ����ѥٔ����(�����յ��й���������	�%���х������х�9����������1��й�������ѥٔ���(�����յ��й�Օ��M����ѽ������х���Ѹ����������������(��������������ɥ��є����ф�х�������х�9������(�������������1��й��������ݡ�є���������ɑ�ȵݡ�є��Ԝ��(�������������1��йɕ��ٔ��ѕ�еݡ�є������(����􁕱͔��(�������������1��йɕ��ٔ�����ݡ�є���������ɑ�ȵݡ�є��Ԝ��(�������������1��й�����ѕ�еݡ�є������(�����(�����)�((��������5=0�U9
+Q%=9L������)�չ�ѥ�����������5��������(�����յ��й���������	�%��������5������������1��й�������ѥٔ���)�()�չ�ѥ������͕����5��������(�����յ��й���������	�%��������5������������1��йɕ��ٔ����ѥٔ���)�((��������e%1�
+1
+U1Q=H��	՜���̀Ĵܤ������)�չ�ѥ�������e��������(�����	՜�İ��%���Ёم����ѥ�������9�8���������(������Ё�����􁑽�յ��й���������	�%����
+������م�Ք�(����Ё�ɕ������͕���С���յ��й���������	�%���ѽх�ɕ����م�Ք�������(����Ё�ɽ�Ѐ����͕���С���յ��й���������	�%����ɽ�х�����م�Ք�������(����Ё���Ѡ�����͕���С���յ��й���������	�%������Ѡ���م�Ք�������(����Ё��չ��ѥ�������͕���С���յ��й���������	�%�����չ��ѥ�����م�Ք�������((�����
+���������ѥٔ�م�Օ́Ѽ��(���ɕ���5�Ѡ��������ɕ���(���ɽ�Ѐ�5�Ѡ��������ɽ�Ф�(�����Ѡ��5�Ѡ����������Ѡ��(����չ��ѥ����5�Ѡ���������չ��ѥ����((�����	՜���������չ��ѥ���Ѽ������ѥٔ��ɕ�(����Ё�����ѥٕɕ���5�Ѡ��������ɕ������չ��ѥ����((�����	՜���I������ɹ�ȁ��Ё��������������������������́Ѽ�������Ё�ɕ�(������Ё��
+�ɹ�Ȁ􁑽�յ��й���������	�%�����
+�ɹ�Ȝ����������(����ЁɌ��)M=8����͔�)M=8���ɥ�����I
+=Mm����t����I
+=L�H�����(�������
+�ɹ�Ȥ��(�������]�H�
+������ɹ�ȁ��Ё������ɕ�Ս��������Ё�ɕ��������(����Ɍ������5�Ѡ�ɽչ��Ɍ�����������(����Ɍ��ٜ��5�Ѡ�ɽչ��Ɍ��ٜ�������(���((�����
+���ձ�є����́ݥѠ�9�8���������(������Ё���̀�5�Ѡ����İ�5�Ѡ�����ȡ�����ѥٕɕ����Ɍ��ٜ��������(������Ё�ٜ�􁱽�̀������5�Ѡ�ɽչ�������ѥٕɕ�������̤����((�����յ��й���������	�%������
+�չМ��ѕ��
+��ѕ�Ѐ􁱽���(�����յ��й���������	�%����ٝA��1�М��ѕ��
+��ѕ�Ѐ􀡅ٜ������������
+Ȝ�(�����յ��й���������	�%������ɕ����ѕ��
+��ѕ�Ѐ􀡕����ѥٕɕ�������������
+Ȝ�((�����	՜���U���є������������х�����幅�������(������ѕ
+���������Q�����Ɍ�������ѥٕɕ����ɽ�а��ٜ�����̤�)�((���	՜���幅���������������х��������є)�չ�ѥ�������ѕ
+���������Q�����Ɍ�����ɕ����ɽ�а��ٝ1�а����
+�չФ��(�����5�����Ё�ɕ�(������Ё���I�Ā�Ɍ�����(������Ё���Mх��̀�ٝ1�Ѐ�􁵥�I�Ā��������������􉉜��ɕ�������ѕ�е�ɕ���������ȁ����ԁɽչ�����ձ��ѕ�е�́���е�������rL�AML��������耜�����������􉉜�ɕ������ѕ�еɕ��������ȁ����ԁɽչ�����ձ��ѕ�е�́���е�������r\�%0��������(�����յ��й���������	�%������������ɕĜ��ѕ��
+��ѕ�Ѐ􀟊&���������I�Ā�����
+Ȝ�(�����յ��й���������	�%���������������Յ����ѕ��
+��ѕ�Ѐ�ٝ1�Ѐ�����
+Ȝ�(�����յ��й���������	�%�������������х��̜�������!Q50�􁵥�Mх����((�����ٜ���Ё�ɕ�(������Ё�ٝI�Ā�Ɍ��ٜ�(������Ё�ٝMх��̀�ٝ1�Ѐ��ٝI�Ā��������������􉉜��ɕ�������ѕ�е�ɕ���������ȁ����ԁɽչ�����ձ��ѕ�е�́���е�������rL�AML��������耜�����������􉉜�ɕ������ѕ�еɕ��������ȁ����ԁɽչ�����ձ��ѕ�е�́���е�������r\�%0��������(�����յ��й���������	�%���������ٜ�ɕĜ��ѕ��
+��ѕ�Ѐ􀟊&�������ٝI�Ā�����
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d1b3e">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d1b3e'/><text x='50' y='65' font-size='60' font-weight='bold' fill='%234a9eff' text-anchor='middle' font-family='Arial'>A</text></svg>" />
+<title>AusBuild Pro V4</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwindcss.config={theme:{extend:{colors:{navy:{'50':'#e6eaf2','100':'#c0c9de','200':'#96a5c8','300':'#6c81b2','400':'#4d66a2','500':'#2e4b93','600':'#29448b','700':'#1f3a80','800':'#173175','900':'#0d1b3e'}}}}}</script>
+<noscript>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</noscript>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; }
+  canvas { cursor: crosshair; }
+  .cost-row:hover { background: #f0f4ff; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .animate-pulse { animation: pulse 2s infinite; }
+  .gradient-bg { background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5e 100%); }
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    nav { flex-wrap: wrap; height: auto !important; padding: 8px 12px !important; gap: 6px; }
+    nav > div:first-child { width: 100%; text-align: center; font-size: 14px !important; }
+    #nav-tabs { width: 100%; display: flex; justify-content: center; gap: 4px; overflow-x: auto; }
+    #nav-tabs .tab-btn { padding: 6px 12px !important; font-size: 11px !important; white-space: nowrap; }
+    nav > div:last-child { display: none; }
+    #tab-calc > div, #tab-design > div, #tab-quote > div {
+      flex-direction: column !important; overflow-y: auto !important; height: auto !important;
+    }
+    body { overflow: auto !important; height: auto !important; min-height: 100vh; }
+    .flex-1.overflow-hidden { overflow: auto !important; height: auto !important; }
+    .tab-content.active { height: auto !important; min-height: calc(100vh - 80px); overflow-y: auto !important; }
+    #tab-calc > div > div:first-child,
+    #tab-quote > div > div:first-child {
+      width: 100% !important; max-width: 100% !important;
+      border-right: none !important; border-bottom: 1px solid #e5e7eb;
+    }
+    #tab-calc > div > div:last-child,
+    #tab-quote > div > div:last-child { width: 100% !important; }
+    #tab-design > div > div:first-child {
+      width: 100% !important; min-height: 45vh; max-height: 50vh;
+      border-right: none !important; border-bottom: 2px solid #4f46e5;
+    }
+    #tab-design > div > div:last-child { width: 100% !important; min-height: 50vh; }
+    #tab-design .draw-tool { padding: 4px 6px !important; font-size: 10px !important; }
+    #tab-design .bg-white.border-b { flex-wrap: wrap; gap: 3px !important; padding: 4px 6px !important; }
+    #penWidth { font-size: 10px !important; padding: 2px 4px !important; }
+    #penColor { width: 22px !important; height: 22px !important; }
+    #tab-design .view-btn { padding: 3px 6px !important; font-size: 9px !important; }
+    #aiPromptInput { font-size: 11px !important; min-height: 36px !important; max-height: 60px !important; }
+    #generateBtn { min-width: 65px !important; padding: 4px 8px !important; font-size: 10px !important; }
+    select, input, button { font-size: 14px !important; min-height: 36px; }
+    .grid-cols-3 { grid-template-columns: 1fr !important; }
+    .grid-cols-2 { grid-template-columns: 1fr !important; }
+    table { font-size: 11px !important; }
+    table th, table td { padding: 4px 6px !important; }
+  }
+  @media (max-width: 400px) {
+    #nav-tabs .tab-btn { padding: 4px 8px !important; font-size: 10px !important; }
+    nav > div:first-child { font-size: 12px !important; }
+    #tab-design .draw-tool { font-size: 9px !important; padding: 3px 5px !important; }
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-900 h-screen flex flex-col overflow-hidden">
+
+<!-- MODAL: About/Info -->
+<div id="aboutModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="text-2xl font-bold text-navy-900 mb-3">AusBuild Pro V4</h2>
+    <p class="text-sm text-gray-600 mb-4">
+      Professional lot yield calculator and design tool for Australian residential development.
+    </p>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-gray-700">
+      <p><strong>Version:</strong> 4.0 (Professional)</p>
+      <p><strong>Region:</strong> Western Australia R-Codes 2024</p>
+      <p><strong>Features:</strong> Lot Yield Calculation, Design Canvas, Budget Estimation</p>
+    </div>
+    <div class="space-y-2 text-xs text-gray-600 mb-4">
+      <p>This application helps developers:</p>
+      <ul class="list-disc ml-4 space-y-1">
+        <li>Calculate optimal lot yields based on R-Code regulations</li>
+        <li>Design site layouts with architectural visualization</li>
+        <li>Estimate project budgets and development costs</li>
+        <li>Verify compliance with local planning requirements</li>
+      </ul>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeAboutModal()" class="flex-1 bg-navy-900 text-white py-2 rounded-lg font-semibold hover:bg-navy-800 transition">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<nav class="gradient-bg text-white px-5 flex items-center justify-between h-12 z-50 flex-shrink-0">
+  <div class="text-lg font-extrabold tracking-wide">
+    Aus<span class="text-blue-300">Build</span> Pro <sup class="text-[9px] opacity-50">V4</sup>
+  </div>
+  <div class="flex gap-1" id="nav-tabs">
+    <button onclick="switchTab('calc')" data-tab="calc" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35">📐 Lot Yield</button>
+    <button onclick="switchTab('design')" data-tab="design" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">🎨 Design AI</button>
+    <button onclick="switchTab('quote')" data-tab="quote" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">💰 Budget Estimate</button>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="text-[10px] opacity-50">R-Codes 2024 | DC 2.2 | AIQS</span>
+    <button onclick="openAboutModal()" class="px-3 py-1 text-xs bg-blue-500 rounded-full hover:bg-blue-600">Info</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="flex-1 overflow-hidden">
+
+<!-- ===== TAB 1: LOT YIELD ===== -->
+<div id="tab-calc" class="tab-content active h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">📐 Lot Yield Calculator</h2>
+      <p class="text-xs text-gray-500 mb-4">WA R-Codes Volume 1 (March 2024)</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Code System</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="codeSystem" onchange="calcYield()">
+            <option value="wa">WA R-Codes</option>
+            <option value="sa" disabled>SA (Coming Soon)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">R-Code Density</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="rCode" onchange="calcYield()">
+            <option value="R20">R20 — Low Density</option>
+            <option value="R25">R25 — Low-Medium</option>
+            <option value="R30" selected>R30 — Medium</option>
+            <option value="R35">R35 — Medium</option>
+            <option value="R40">R40 — Medium-High</option>
+            <option value="R60">R60 — High</option>
+            <option value="R80">R80 — Very High</option>
+            <option value="R100">R100 — Multi</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Dwelling Type</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="dwType" onchange="calcYield()">
+            <option value="single">Single House</option>
+            <option value="grouped">Grouped Dwelling</option>
+            <option value="multiple">Multiple Dwelling</option>
+          </select>
+        </div>
+        <hr class="my-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Total Area (m²)</label>
+            <input type="number" value="850" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="totalArea" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Frontage (m)</label>
+            <input type="number" value="20" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="frontage" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Depth (m)</label>
+            <input type="number" value="42.5" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="depth" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Truncation (m²)</label>
+            <input type="number" value="0" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="truncation" onchange="calcYield()">
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isCorner" onchange="calcYield()"> Corner Lot</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isBattleaxe" onchange="calcYield()"> Battle-axe</label>
+        </div>
+        <button onclick="calcYield()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          ⚡ Calculate Yield
+        </button>
+      </div>
+    </div>
+    <!-- Right Panel: Results -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Lot Count</div>
+            <div class="text-3xl font-bold text-navy-900" id="lotCount">2</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Avg Per Lot</div>
+            <div class="text-2xl font-bold text-blue-600" id="avgPerLot">425 m²</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Effective Area</div>
+            <div class="text-2xl font-bold text-green-600" id="effArea">850 m²</div>
+          </div>
+        </div>
+        <!-- Compliance Table -->
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="font-bold text-sm mb-3">📋 R-Code Compliance Check</h3>
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50"><th class="text-left p-2">Clause</th><th class="text-left p-2">Requirement</th><th class="text-left p-2">Actual</th><th class="p-2">Status</th></tr></thead>
+            <tbody id="complianceTable">
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Min Lot Area</td><td class="p-2" id="comp-min-req">≥ 300 m²</td><td class="p-2" id="comp-min-actual">425 m²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-min-status">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.1 Avg Lot Area</td><td class="p-2" id="comp-avg-req">≥ 350 m²</td><td class="p-2" id="comp-avg-actual">425 m²</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-avg-status">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.1.2 Min Frontage</td><td class="p-2" id="comp-front-req">≥ 10 m</td><td class="p-2" id="comp-front-actual">20 m</td><td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-front-status">✓ PASS</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.1 Primary Setback</td><td class="p-2" id="comp-setback-req">≥ 4 m</td><td class="p-2" id="comp-setback-actual">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-setback-status">⏳ TBD</span></td></tr>
+              <tr class="border-t"><td class="p-2 text-xs">5.3.3 Open Space</td><td class="p-2" id="comp-open-req">≥ 50%</td><td class="p-2" id="comp-open-actual">TBD</td><td class="p-2 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold" id="comp-open-status">⏳ TBD</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: DESIGN (50/50 split) ===== -->
+<div id="tab-design" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- LEFT 50%: Drawing Canvas (blank for user to draw) -->
+    <div class="w-1/2 flex flex-col border-r-2 border-gray-300">
+      <!-- Toolbar -->
+      <div class="bg-white border-b px-3 py-2 flex items-center gap-2 flex-shrink-0 flex-wrap">
+        <button onclick="setTool('draw', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-navy-900 text-white font-bold">✏️ Draw</button>
+        <button onclick="setTool('rect', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">⬜ Room</button>
+        <button onclick="setTool('line', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">━ Wall</button>
+        <button onclick="setTool('door', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🚪 Door</button>
+        <button onclick="setTool('window', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🪟 Window</button>
+        <button onclick="setTool('erase', this)" class="draw-tool px-2.5 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 font-bold">🗑️ Erase</button>
+        <input type="number" id="penWidth" value="3" min="1" max="50" autocomplete="off" style="width:50px;" class="border rounded px-2 py-1 text-xs">
+        <input type="color" id="penColor" value="#222222" style="width:35px; height:32px; cursor:pointer;">
+        <button onclick="undoCanvas()" class="px-2 py-1 text-xs rounded bg-blue-100 hover:bg-blue-200 font-bold">↶ Undo</button>
+        <button onclick="redoCanvas()" class="px-2 py-1 text-xs rounded bg-blue-100 hover:bg-blue-200 font-bold">↷ Redo</button>
+        <button onclick="clearCanvas()" class="px-2 py-1 text-xs rounded bg-red-100 hover:bg-red-200 font-bold text-red-700">Clear</button>
+      </div>
+      <!-- Canvas -->
+      <canvas id="drawCanvas" class="flex-1 bg-white cursor-crosshair"></canvas>
+    </div>
+    <!-- RIGHT 50%: 3D Renders + AI -->
+    <div class="w-1/2 flex flex-col bg-gray-50 border-l">
+      <!-- View Mode Buttons -->
+      <div class="bg-white border-b px-3 py-2 flex gap-2 flex-shrink-0">
+        <button onclick="setViewMode('floor', this)" class="view-btn px-3 py-1 text-xs font-bold rounded bg-white/15 text-white">📐 Floor</button>
+        <button onclick="setViewMode('ext', this)" class="view-btn px-3 py-1 text-xs font-bold rounded text-white/50">🏠 Exterior</button>
+        <button onclick="setViewMode('int', this)" class="view-btn px-3 py-1 text-xs font-bold rounded text-white/50">🛋️ Interior</button>
+      </div>
+      <!-- Render Area -->
+      <div id="renderArea" class="flex-1 flex items-center justify-center overflow-auto bg-gray-100 p-3">
+        <svg id="floorRender" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" style="width:100%;max-height:100%;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+          <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="#999">Floor plan renders here</text>
+        </svg>
+      </div>
+      <!-- AI Prompt -->
+      <div class="bg-white border-t px-3 py-2 flex gap-2 flex-shrink-0">
+        <textarea id="aiPromptInput" class="flex-1 border rounded px-2 py-1 text-xs resize-none" placeholder="Describe the design..."></textarea>
+        <button id="generateBtn" onclick="generateAIRender()" class="px-3 py-1 text-xs bg-blue-500 text-white rounded font-bold hover:bg-blue-600">✨ Generate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: BUDGET ESTIMATE ===== -->
+<div id="tab-quote" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">💰 Budget Estimator</h2>
+      <p class="text-xs text-gray-500 mb-4">Cost breakdown by construction phase</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-2">Project Phase</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="site" checked> Site Preparation</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="foundation"> Foundation & Structure</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="services"> Services & Utilities</label>
+            <label class="flex items-center gap-2 text-sm"><input type="radio" name="phase" value="finishing"> Finishing & Landscaping</label>
+          </div>
+        </div>
+        <hr>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Number of Lots</label>
+          <input type="number" value="2" min="1" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="budgetLots" onchange="calcBudget()">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Cost Per m² ($)</label>
+          <input type="number" value="1200" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="costPerM2" onchange="calcBudget()">
+        </div>
+        <button onclick="calcBudget()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          💡 Estimate Budget
+        </button>
+      </div>
+    </div>
+    <!-- Right Panel: Cost Breakdown -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-bold text-sm mb-3">Project Cost Summary</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Total Area</span>
+              <span class="font-semibold" id="budgetArea">850 m²</span>
+            </div>
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Construction Cost</span>
+              <span class="font-semibold text-green-600" id="budgetConstruction">$1,020,000</span>
+            </div>
+            <div class="flex justify-between cost-row p-2 rounded">
+              <span>Contingency (10%)</span>
+              <span class="font-semibold text-amber-600" id="budgetContingency">$102,000</span>
+            </div>
+            <div class="flex justify-between bg-navy-900/10 p-2 rounded border border-navy-900/20">
+              <span class="font-bold">Total Budget</span>
+              <span class="font-bold text-navy-900" id="budgetTotal">$1,122,000</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-bold text-sm mb-3">Cost Per Lot</h3>
+          <div class="text-center">
+            <div class="text-4xl font-bold text-blue-600" id="costPerLot">$561,000</div>
+            <p class="text-xs text-gray-500 mt-1">Per dwelling unit</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+
+<script>
+// ===== TOAST NOTIFICATION =====
+function showToast(msg, duration=3000) {
+  let t = document.getElementById('app-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'app-toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1f3a80;color:white;padding:12px 24px;border-radius:8px;font-size:14px;z-index:99999;opacity:0;transition:opacity 0.3s;max-width:90%;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.3)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, duration);
+}
+
+// ===== GLOBAL STATE =====
+const RCODES = {
+  R20: {min:350,avg:450,front:10,setback:6,open:50},
+  R25: {min:300,avg:350,front:10,setback:4,open:50},
+  R30: {min:260,avg:300,front:10,setback:4,open:50},
+  R35: {min:220,avg:260,front:8,setback:4,open:50},
+  R40: {min:180,avg:220,front:8,setback:3,open:45},
+  R60: {min:150,avg:180,front:7,setback:2,open:40},
+  R80: {min:120,avg:150,front:6,setback:2,open:35},
+  R100:{min:100,avg:120,front:5,setback:1.5,open:30},
+};
+
+// ===== TAB SWITCHING =====
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if(b.getAttribute('data-tab') === tabName) {
+      b.classList.add('bg-white/20', 'border-white/35');
+      b.classList.remove('text-white/70');
+    } else {
+      b.classList.remove('bg-white/20', 'border-white/35');
+      b.classList.add('text-white/70');
+    }
+  });
+}
+
+// ===== MODAL FUNCTIONS =====
+function openAboutModal() {
+  document.getElementById('aboutModal').classList.add('active');
+}
+
+function closeAboutModal() {
+  document.getElementById('aboutModal').classList.remove('active');
+}
+
+// ===== YIELD CALCULATOR (Bug Fixes 1-7) =====
+function calcYield() {
+  // Bug 1,2: Input validation and NaN handling
+  const code = document.getElementById('rCode').value;
+  let area = parseFloat(document.getElementById('totalArea').value) || 0;
+  let front = parseFloat(document.getElementById('frontage').value) || 0;
+  let depth = parseFloat(document.getElementById('depth').value) || 0;
+  let truncation = parseFloat(document.getElementById('truncation').value) || 0;
+
+  // Clamp negative values to 0
+  area = Math.max(0, area);
+  front = Math.max(0, front);
+  depth = Math.max(0, depth);
+  truncation = Math.max(0, truncation);
+
+  // Bug 5: Apply truncation to effective area
+  let effectiveArea = Math.max(0, area - truncation);
+
+  // Bug 3: Read corner lot checkbox and apply 20% bonus to min lot area
+  const isCorner = document.getElementById('isCorner').checked;
+  let rc = JSON.parse(JSON.stringify(RCODES[code] || RCODES.R30));
+  if(isCorner) {
+    // WA R-Code corner lot bonus: reduce min lot area by ~20%
+    rc.min = Math.round(rc.min * 0.8);
+    rc.avg = Math.round(rc.avg * 0.8);
+  }
+
+  // Calculate lots with NaN fallback
+  const lots = Math.max(1, Math.floor(effectiveArea / rc.avg)) || 1;
+  const avg = lots > 0 ? Math.round(effectiveArea / lots) : 0;
+
+  document.getElementById('lotCount').textContent = lots;
+  document.getElementById('avgPerLot').textContent = (avg || 0) + ' m²';
+  document.getElementById('effArea').textContent = (effectiveArea || 0) + ' m²';
+
+  // Bug 7: Update compliance table dynamically
+  updateComplianceTable(rc, effectiveArea, front, avg, lots);
+}
+
+// Bug 7: Dynamic compliance table update
+function updateComplianceTable(rc, effArea, front, avgLot, lotCount) {
+  // Min lot area
+  const minReq = rc.min;
+  const minStatus = avgLot >= minReq ? '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✓ PASS</span>' : '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">✗ FAIL</span>';
+  document.getElementById('comp-min-req').textContent = '≥ ' + minReq + ' m²';
+  document.getElementById('comp-min-actual').textContent = avgLot + ' m²';
+  document.getElementById('comp-min-status').innerHTML = minStatus;
+
+  // Avg lot area
+  const avgReq = rc.avg;
+  const avgStatus = avgLot >= avgReq ? '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✓ PASS</span>' : '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">✗ FAIL</span>';
+  document.getElementById('comp-avg-req').textContent = '≥ ' + avgReq + ' m²';
+  document.getElementById('comp-avg-actual').textContent = avgLot + ' m²';
+  document.getElementById('comp-avg-status').innerHTML = avgStatus;
+
+  // Frontage
+  const frontReq = rc.front;
+  const frontStatus = front >= frontReq ? '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✓ PASS</span>' : '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">✗ FAIL</span>';
+  document.getElementById('comp-front-req').textContent = '≥ ' + frontReq + ' m';
+  document.getElementById('comp-front-actual').textContent = front + ' m';
+  document.getElementById('comp-front-status').innerHTML = frontStatus;
+
+  // Setback (TBD - requires design input)
+  document.getElementById('comp-setback-req').textContent = '≥ ' + rc.setback + ' m';
+
+  // Open space (TBD - requires design input)
+  document.getElementById('comp-open-req').textContent = '≥ ' + rc.open + '%';
+}
+
+// ===== DRAWING CANVAS (Bug Fixes 14-17) =====
+let currentTool = 'draw', drawing = false, lastX = 0, lastY = 0;
+let penW = 3, penC = '#222222';
+let startX = 0, startY = 0;
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+
+// Canvas history for undo/redo (Bug 16)
+let canvasHistory = [];
+let canvasHistoryStep = -1;
+
+function saveCanvasState() {
+  canvasHistoryStep++;
+  if(canvasHistoryStep < canvasHistory.length) {
+    canvasHistory.length = canvasHistoryStep;
+  }
+  canvasHistory.push(canvas.toDataURL());
+}
+
+function undoCanvas() {
+  if(canvasHistoryStep > 0) {
+    canvasHistoryStep--;
+    restoreCanvasState();
+  }
+}
+
+function redoCanvas() {
+  if(canvasHistoryStep < canvasHistory.length - 1) {
+    canvasHistoryStep++;
+    restoreCanvasState();
+  }
+}
+
+function restoreCanvasState() {
+  const img = new Image();
+  img.src = canvasHistory[canvasHistoryStep];
+  img.onload = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+  };
+}
+
+let canvasImageBackup = null;
+function resizeCanvas() {
+  const parent = canvas.parentElement;
+  const pw = parent.clientWidth;
+  const ph = parent.clientHeight;
+  if (pw === 0 || ph === 0) return;
+
+  // Bug 15: Scale canvas content proportionally on resize
+  if (canvas.width > 0 && canvas.height > 0) {
+    try {
+      canvasImageBackup = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    } catch(e) {
+      canvasImageBackup = null;
+    }
+  }
+
+  const oldWidth = canvas.width;
+  const oldHeight = canvas.height;
+  canvas.width = pw;
+  canvas.height = ph;
+  drawGrid();
+
+  if (canvasImageBackup && oldWidth > 0 && oldHeight > 0) {
+    try {
+      const scaleX = pw / oldWidth;
+      const scaleY = ph / oldHeight;
+      ctx.scale(scaleX, scaleY);
+      ctx.putImageData(canvasImageBackup, 0, 0);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    } catch(e) {}
+  }
+}
+
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 50);
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  drawing = true;
+  startX = lastX = (touch.clientX - rect.left) * (canvas.width / rect.width);
+  startY = lastY = (touch.clientY - rect.top) * (canvas.height / rect.height);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!drawing) return;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+
+  drawLineSegment(lastX, lastY, x, y);
+  [lastX, lastY] = [x, y];
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => {
+  if(drawing && currentTool !== 'draw') {
+    finishShape(lastX, lastY);
+  }
+  drawing = false;
+  saveCanvasState();
+});
+
+function drawGrid() {
+  ctx.save();
+  ctx.strokeStyle = '#eee';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < canvas.width; x += 25) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += 25) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawLineSegment(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.lineCap = 'round';
+
+  if (currentTool === 'erase') {
+    // Bug 14: Proper erasing with composite mode
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.lineWidth = 25;
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = penC;
+    ctx.lineWidth = penW;
+  }
+
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function finishShape(endX, endY) {
+  if(currentTool === 'rect') {
+    // Bug 17: Room tool draws rectangles
+    const width = Math.abs(endX - startX);
+    const height = Math.abs(endY - startY);
+    const x = Math.min(startX, endX);
+    const y = Math.min(startY, endY);
+    ctx.strokeStyle = penC;
+    ctx.lineWidth = penW;
+    ctx.strokeRect(x, y, width, height);
+  } else if(currentTool === 'line') {
+    // Bug 17: Wall tool draws straight lines
+    ctx.strokeStyle = penC;
+    ctx.lineWidth = penW;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  } else if(currentTool === 'door') {
+    // Bug 17: Door tool draws door arc symbol
+    ctx.strokeStyle = penC;
+    ctx.lineWidth = penW;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    // Draw arc to indicate door swing
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+    const dist = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+    const angle = Math.atan2(endY - startY, endX - startX);
+    ctx.beginPath();
+    ctx.arc(startX, startY, dist * 0.4, angle, angle + Math.PI / 2, false);
+    ctx.stroke();
+  } else if(currentTool === 'window') {
+    // Bug 17: Window tool draws window line symbol
+    ctx.strokeStyle = penC;
+    ctx.lineWidth = penW * 2;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    // Draw small perpendicular marks
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+    const angle = Math.atan2(endY - startY, endX - startX);
+    const markLen = 10;
+    ctx.lineWidth = penW;
+    ctx.beginPath();
+    ctx.moveTo(midX - Math.sin(angle) * markLen, midY + Math.cos(angle) * markLen);
+    ctx.lineTo(midX + Math.sin(angle) * markLen, midY - Math.cos(angle) * markLen);
+    ctx.stroke();
+  }
+}
+
+canvas.onmousedown = (e) => {
+  drawing = true;
+  const rect = canvas.getBoundingClientRect();
+  startX = lastX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  startY = lastY = (e.clientY - rect.top) * (canvas.height / rect.height);
+  saveCanvasState();
+};
+
+canvas.onmousemove = (e) => {
+  if (!drawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  if(currentTool === 'draw' || currentTool === 'erase') {
+    drawLineSegment(lastX, lastY, x, y);
+    [lastX, lastY] = [x, y];
+  }
+};
+
+canvas.onmouseup = (e) => {
+  if(drawing && currentTool !== 'draw' && currentTool !== 'erase') {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    finishShape(x, y);
+  }
+  drawing = false;
+  if(drawing === false) {
+    saveCanvasState();
+  }
+};
+
+// Bug 8-10: Fixed setTool and setViewMode to use passed button element
+function setTool(tool, btn) {
+  currentTool = tool;
+  penW = parseInt(document.getElementById('penWidth').value) || 3;
+  penC = document.getElementById('penColor').value;
+
+  document.querySelectorAll('.draw-tool').forEach(b => {
+    b.classList.remove('bg-navy-900', 'text-white');
+    b.classList.add('bg-gray-200');
+  });
+  if(btn) {
+    btn.classList.remove('bg-gray-200');
+    btn.classList.add('bg-navy-900', 'text-white');
+  }
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  canvasHistory = [];
+  canvasHistoryStep = -1;
+  saveCanvasState();
+}
+
+let autoRenderTimer = null;
+let renderCount = 0;
+let currentViewMode = 'floor';
+var aiRenderedImages = { floor: null, ext: null, int: null };
+
+// Bug 8-10: Fixed setViewMode to use passed button element
+function setViewMode(mode, btn) {
+  currentViewMode = mode;
+  document.querySelectorAll('.view-btn').forEach(b => {
+    b.classList.remove('bg-white/15', 'text-white');
+    b.classList.add('text-white/50');
+  });
+  if(btn) {
+    btn.classList.add('bg-white/15', 'text-white');
+    btn.classList.remove('text-white/50');
+  }
+  showRender();
+}
+
+function generateFloorPlanSVG(w, h) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" style="width:100%;height:100%;background:#fafafa">
+    <defs>
+      <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e8e8e8" stroke-width="0.3"/></pattern>
+      <filter id="shadow"><feDropShadow dx="1" dy="1" stdDeviation="2" flood-opacity="0.08"/></filter>
+    </defs>
+    <rect width="${w}" height="${h}" fill="url(#grid)"/>
+    <rect x="15" y="10" width="280" height="35" rx="3" fill="#0d1b3e" filter="url(#shadow)"/>
+    <text x="25" y="30" fill="white" font-size="11" font-family="Arial" font-weight="bold">FLOOR PLAN — ARCHITECTURAL LAYOUT</text>
+    <text x="200" y="30" fill="#8fa4d0" font-size="8" font-family="Arial">Scale 1:100 | A3</text>
+    <g transform="translate(${w-50},25)"><circle r="14" fill="white" stroke="#333" stroke-width="0.8"/><polygon points="0,-11 3,2 -3,2" fill="#0d1b3e"/><text y="-3" text-anchor="middle" font-size="6" fill="#0d1b3e" font-weight="bold">N</text></g>
+    <rect x="60" y="65" width="${w-120}" height="${h-120}" fill="none" stroke="#1a1a1a" stroke-width="6" rx="1"/>
+    <line x1="${w*0.45}" y1="65" x2="${w*0.45}" y2="${h*0.55}" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="60" y1="${h*0.55}" x2="${w-60}" y2="${h*0.55}" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="${w*0.65}" y1="${h*0.55}" x2="${w*0.65}" y2="${h-55}" stroke="#1a1a1a" stroke-width="4"/>
+    <line x1="${w*0.45}" y1="${h*0.32}" x2="${w-60}" y2="${h*0.32}" stroke="#1a1a1a" stroke-width="4"/>
+    <rect x="63" y="68" width="${w*0.45-66}" height="${h*0.55-71}" fill="#f0f7ff" opacity="0.4"/>
+    <rect x="${w*0.45+3}" y="68" width="${w-w*0.45-66}" height="${h*0.32-71}" fill="#fff8f0" opacity="0.4"/>
+    <rect x="${w*0.45+3}" y="${h*0.32+3}" width="${w-w*0.45-66}" height="${h*0.55-h*0.32-6}" fill="#f0fff4" opacity="0.4"/>
+    <rect x="63" y="${h*0.55+3}" width="${w*0.65-66}" height="${h-h*0.55-58}" fill="#faf0ff" opacity="0.3"/>
+    <rect x="${w*0.65+3}" y="${h*0.55+3}" width="${w-w*0.65-66}" height="${h-h*0.55-58}" fill="#fff5f5" opacity="0.3"/>
+    <text x="${(60+w*0.45)/2}" y="${(68+h*0.55)/2-8}" text-anchor="middle" font-size="13" font-family="Arial" fill="#1a3a6a" font-weight="bold">LIVING / DINING</text>
+    <text x="${(60+w*0.45)/2}" y="${(68+h*0.55)/2+8}" text-anchor="middle" font-size="9" font-family="Arial" fill="#6b8cb8">5.2m × 4.8m = 25.0 m²</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(68+h*0.32)/2-5}" text-anchor="middle" font-size="12" font-family="Arial" fill="#6a3a1a" font-weight="bold">MASTER BEDROOM</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(68+h*0.32)/2+9}" text-anchor="middle" font-size="9" font-family="Arial" fill="#b88c6b">4.0m × 3.5m = 14.0 m²</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(h*0.32+h*0.55)/2}" text-anchor="middle" font-size="11" font-family="Arial" fill="#1a6a3a" font-weight="bold">KITCHEN</text>
+    <text x="${(w*0.45+w-60)/2}" y="${(h*0.32+h*0.55)/2+13}" text-anchor="middle" font-size="9" font-family="Arial" fill="#6bb88c">3.8m × 2.8m = 10.6 m²</text>
+    <text x="${(63+w*0.65)/2}" y="${(h*0.55+h-55)/2}" text-anchor="middle" font-size="11" font-family="Arial" fill="#4a1a6a" font-weight="bold">BEDROOM 2</text>
+    <text x="${(63+w*0.65)/2}" y="${(h*0.55+h-55)/2+13}" text-anchor="middle" font-size="9" font-family="Arial" fill="#8c6bb8">3.5m × 3.2m = 11.2 m²</text>
+    <text x="${(w*0.65+w-60)/2}" y="${(h*0.55+h-55)/2}" text-anchor="middle" font-size="10" font-family="Arial" fill="#6a1a1a" font-weight="bold">BATHROOM</text>
+    <text x="${(w*0.65+w-60)/2}" y="${(h*0.55+h-55)/2+13}" text-anchor="middle" font-size="9" font-family="Arial" fill="#b86b6b">2.4m × 2.2m</text>
+    <path d="M ${w*0.45-20} ${h*0.4} A 20 20 0 0 1 ${w*0.45} ${h*0.4-20}" fill="none" stroke="#666" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <line x1="${w*0.45-20}" y1="${h*0.4}" x2="${w*0.45}" y2="${h*0.4}" stroke="#666" stroke-width="1"/>
+    <path d="M ${w*0.3} ${h*0.55} A 18 18 0 0 0 ${w*0.3+18} ${h*0.55+18}" fill="none" stroke="#666" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <line x1="60" y1="${h*0.25}" x2="60" y2="${h*0.4}" stroke="#4a9eff" stroke-width="3"/>
+    <line x1="62" y1="${h*0.25}" x2="62" y2="${h*0.4}" stroke="#4a9eff" stroke-width="1"/>
+    <line x1="${w*0.6}" y1="65" x2="${w*0.8}" y2="65" stroke="#4a9eff" stroke-width="3"/>
+    <line x1="${w*0.6}" y1="67" x2="${w*0.8}" y2="67" stroke="#4a9eff" stroke-width="1"/>
+    <g stroke="#999" stroke-width="0.5" fill="#999" font-size="8" font-family="Arial">
+      <line x1="60" y1="${h-30}" x2="${w-60}" y2="${h-30}"/>
+      <line x1="60" y1="${h-33}" x2="60" y2="${h-27}"/>
+      <line x1="${w-60}" y1="${h-33}" x2="${w-60}" y2="${h-27}"/>
+      <text x="${w/2}" y="${h-22}" text-anchor="middle">${((w-120)/10).toFixed(1)}m</text>
+      <line x1="${w-30}" y1="65" x2="${w-30}" y2="${h-55}"/>
+      <line x1="${w-33}" y1="65" x2="${w-27}" y2="65"/>
+      <line x1="${w-33}" y1="${h-55}" x2="${w-27}" y2="${h-55}"/>
+      <text x="${w-18}" y="${h/2}" text-anchor="middle" transform="rotate(90,${w-18},${h/2})">${((h-120)/10).toFixed(1)}m</text>
+    </g>
+    <rect x="${w*0.48}" y="${h*0.34}" width="35" height="8" rx="1" fill="none" stroke="#888" stroke-width="0.8"/>
+    <circle cx="${w*0.48+10}" cy="${h*0.34+4}" r="2.5" fill="none" stroke="#888" stroke-width="0.5"/>
+    <circle cx="${w*0.48+25}" cy="${h*0.34+4}" r="2.5" fill="none" stroke="#888" stroke-width="0.5"/>
+    <ellipse cx="${w*0.75}" cy="${h*0.65}" rx="8" ry="5" fill="none" stroke="#888" stroke-width="0.8"/>
+    <rect x="${w*0.82}" y="${h*0.62}" width="6" height="9" rx="1" fill="none" stroke="#888" stroke-width="0.8"/>
+    <g transform="translate(${w-180},${h-18})">
+      <rect width="60" height="4" fill="#333"/><rect x="60" width="60" height="4" fill="#999"/>
+      <text x="0" y="-3" font-size="7" fill="#666" font-family="Arial">0</text>
+      <text x="60" y="-3" font-size="7" fill="#666" font-family="Arial" text-anchor="middle">3m</text>
+      <text x="120" y="-3" font-size="7" fill="#666" font-family="Arial" text-anchor="end">6m</text>
+    </g>
+    <rect x="${w-180}" y="12" width="145" height="30" rx="3" fill="white" stroke="#ddd" stroke-width="0.5" filter="url(#shadow)"/>
+    <text x="${w-170}" y="25" font-size="8" font-family="Arial" fill="#666">Total: <tspan font-weight="bold" fill="#0d1b3e">85.6 m²</tspan> (3 Bed / 1 Bath)</text>
+    <text x="${w-170}" y="36" font-size="7" font-family="Arial" fill="#999">Professional Render | AusBuild Pro</text>
+  </svg>`;
+}
+
+function showRender() {
+  const renderArea = document.getElementById('renderArea');
+  if(currentViewMode === 'floor') {
+    const svg = generateFloorPlanSVG(800, 600);
+    renderArea.innerHTML = svg;
+  } else if(currentViewMode === 'ext') {
+    renderArea.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#999; text-align:center;"><div><p>Exterior Render</p><p style="font-size:12px;">Use the Generate button to create 3D exterior view</p></div></div>';
+  } else if(currentViewMode === 'int') {
+    renderArea.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#999; text-align:center;"><div><p>Interior Render</p><p style="font-size:12px;">Use the Generate button to create 3D interior view</p></div></div>';
+  }
+}
+
+function generateAIRender() {
+  const prompt = document.getElementById('aiPromptInput').value;
+  if(!prompt.trim()) {
+    showToast('Please enter a description for the design.');
+    return;
+  }
+  showToast('AI rendering requested: ' + prompt);
+}
+
+// ===== BUDGET ESTIMATOR =====
+function calcBudget() {
+  const lots = parseInt(document.getElementById('budgetLots').value) || 2;
+  const costPerM2 = parseFloat(document.getElementById('costPerM2').value) || 1200;
+  const area = parseFloat(document.getElementById('totalArea').value) || 850;
+
+  const constructionCost = area * costPerM2;
+  const contingency = constructionCost * 0.1;
+  const totalBudget = constructionCost + contingency;
+  const costPerLot = totalBudget / lots;
+
+  document.getElementById('budgetArea').textContent = area + ' m²';
+  document.getElementById('budgetConstruction').textContent = '$' + constructionCost.toLocaleString();
+  document.getElementById('budgetContingency').textContent = '$' + contingency.toLocaleString();
+  document.getElementById('budgetTotal').textContent = '$' + totalBudget.toLocaleString();
+  document.getElementById('costPerLot').textContent = '$' + costPerLot.toLocaleString();
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', (e) => {
+  if((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    undoCanvas();
+  } else if((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+    e.preventDefault();
+    redoCanvas();
+  }
+});
+
+// Initialize
+window.addEventListener('load', () => {
+  calcYield();
+  calcBudget();
+  showRender();
+  setTool('draw', document.querySelector('.draw-tool'));
+  setViewMode('floor', document.querySelector('.view-btn'));
+  saveCanvasState();
+});
+</script>
+</body>
+</html>
