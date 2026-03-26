@@ -23,6 +23,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.2
+
       - name: Create Android project structure
         run: |
           mkdir -p app/src/main/java/com/ausbuild/pro
@@ -335,7 +340,7 @@ jobs:
 
       - name: Build Release APK and AAB
         run: |
-          gradle wrapper --gradle-version 8.2
+          gradle wrapper
           ./gradlew assembleRelease bundleRelease
 
       - name: Upload Release APK
