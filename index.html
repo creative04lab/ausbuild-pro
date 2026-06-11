@@ -3,373 +3,1234 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AusBuild Pro V4 â Preliminary Budget Tool for Architects</title>
-<meta name="description" content="Free preliminary construction cost estimator for architects in Sydney & Adelaide. Give clients instant budget ranges during Schematic Design. Calibrated with 170+ AArch data points.">
+<meta name="theme-color" content="#0d1b3e">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d1b3e'/><text x='50' y='65' font-size='60' font-weight='bold' fill='%234a9eff' text-anchor='middle' font-family='Arial'>A</text></svg>" />
+<title>AusBuild Pro V5</title>
+
+
+<noscript>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; color: #1a1a2e; background: #fff; }
-
-  /* Hero */
-  .hero {
-    background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5e 50%, #2e4b93 100%);
-    color: white; padding: 60px 20px 80px; text-align: center; position: relative; overflow: hidden;
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
   }
-  .hero::after {
-    content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 60px;
-    background: white; clip-path: ellipse(55% 100% at 50% 100%);
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</noscript>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; }
+  canvas { cursor: crosshair; }
+  .cost-row:hover { background: #f0f4ff; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .animate-pulse { animation: pulse 2s infinite; }
+  .gradient-bg { background: linear-gradient(135deg, #0d1b3e 0%, #1a2d5e 100%); }
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    nav { flex-wrap: wrap; height: auto !important; padding: 8px 12px !important; gap: 6px; }
+    nav > div:first-child { width: 100%; text-align: center; font-size: 14px !important; }
+    #nav-tabs { width: 100%; display: flex; justify-content: center; gap: 4px; overflow-x: auto; }
+    #nav-tabs .tab-btn { padding: 6px 12px !important; font-size: 11px !important; white-space: nowrap; }
+    nav > div:last-child { display: none; }
+    #tab-calc > div, #tab-design > div, #tab-quote > div {
+      flex-direction: column !important; overflow-y: auto !important; height: auto !important;
+    }
+    body { overflow: auto !important; height: auto !important; min-height: 100vh; }
+    .flex-1.overflow-hidden { overflow: auto !important; height: auto !important; }
+    .tab-content.active { height: auto !important; min-height: calc(100vh - 80px); overflow-y: auto !important; }
+    #tab-calc > div > div:first-child,
+    #tab-quote > div > div:first-child {
+      width: 100% !important; max-width: 100% !important;
+      border-right: none !important; border-bottom: 1px solid #e5e7eb;
+    }
+    #tab-calc > div > div:last-child,
+    #tab-quote > div > div:last-child { width: 100% !important; }
+    #tab-design > div > div:first-child {
+      width: 100% !important; min-height: 45vh; max-height: 50vh;
+      border-right: none !important; border-bottom: 2px solid #4f46e5;
+    }
+    #tab-design > div > div:last-child { width: 100% !important; min-height: 50vh; }
+    #tab-design .draw-tool { padding: 4px 6px !important; font-size: 10px !important; }
+    #tab-design .bg-white.border-b { flex-wrap: wrap; gap: 3px !important; padding: 4px 6px !important; }
+    #penWidth { font-size: 10px !important; padding: 2px 4px !important; }
+    #penColor { width: 22px !important; height: 22px !important; }
+    #tab-design .view-btn { padding: 3px 6px !important; font-size: 9px !important; }
+    #aiPromptInput { font-size: 11px !important; min-height: 36px !important; max-height: 60px !important; }
+    #generateBtn { min-width: 65px !important; padding: 4px 8px !important; font-size: 10px !important; }
+    select, input, button { font-size: 14px !important; min-height: 36px; }
+    .grid-cols-3 { grid-template-columns: 1fr !important; }
+    .grid-cols-2 { grid-template-columns: 1fr !important; }
+    table { font-size: 11px !important; }
+    table th, table td { padding: 4px 6px !important; }
   }
-  .hero h1 { font-size: 2.8rem; font-weight: 900; margin-bottom: 12px; letter-spacing: -1px; }
-  .hero h1 span { color: #60a5fa; }
-  .hero .badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 16px; font-size: 0.8rem; margin-bottom: 20px; backdrop-filter: blur(4px); }
-  .hero p { font-size: 1.15rem; max-width: 650px; margin: 0 auto 30px; opacity: 0.9; line-height: 1.6; }
-  .hero .cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px;
-    border-radius: 10px; font-size: 1rem; font-weight: 700; text-decoration: none;
-    transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; border: none;
+  @media (max-width: 400px) {
+    #nav-tabs .tab-btn { padding: 4px 8px !important; font-size: 10px !important; }
+    nav > div:first-child { font-size: 12px !important; }
+    #tab-design .draw-tool { font-size: 9px !important; padding: 3px 5px !important; }
   }
-  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
-  .btn-primary { background: #2563eb; color: white; }
-  .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
-  .btn-green { background: #16a34a; color: white; }
-
-  /* Stats */
-  .stats {
-    display: flex; justify-content: center; gap: 40px; padding: 40px 20px;
-    flex-wrap: wrap; background: #f8fafc;
+  * { -webkit-tap-highlight-color: transparent; }
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
   }
-  .stat { text-align: center; }
-  .stat .num { font-size: 2.2rem; font-weight: 900; color: #0d1b3e; }
-  .stat .label { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
-
-  /* Sections */
-  .section { padding: 60px 20px; max-width: 960px; margin: 0 auto; }
-  .section h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: #0d1b3e; }
-  .section .subtitle { color: #64748b; margin-bottom: 32px; font-size: 1rem; }
-
-  /* Features Grid */
-  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-  .feature-card {
-    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+  .modal-overlay.active {
+    display: flex;
   }
-  .feature-card:hover { border-color: #2563eb; box-shadow: 0 4px 15px rgba(37,99,235,0.1); }
-  .feature-card .icon { font-size: 1.8rem; margin-bottom: 12px; }
-  .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
-  .feature-card p { font-size: 0.9rem; color: #64748b; line-height: 1.5; }
-
-  /* How It Works */
-  .steps { display: flex; gap: 24px; flex-wrap: wrap; }
-  .step {
-    flex: 1; min-width: 200px; text-align: center; padding: 24px;
-    background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; position: relative;
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
   }
-  .step .num {
-    width: 36px; height: 36px; border-radius: 50%; background: #0d1b3e; color: white;
-    display: inline-flex; align-items: center; justify-content: center; font-weight: 800; margin-bottom: 12px;
+  .warning-banner {
+    background-color: #fef9c3;
+    border-left: 4px solid #f59e0b;
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: #92400e;
   }
-  .step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
-  .step p { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
-
-  /* Pricing */
-  .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-  .price-card {
-    border: 2px solid #e2e8f0; border-radius: 16px; padding: 32px 24px; text-align: center;
-    transition: border-color 0.3s, transform 0.2s;
+  /* Scale indicator visual style */
+  .scale-indicator {
+    font-size: 10px;
+    color: #6b7280;
+    padding: 4px 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
   }
-  .price-card.featured { border-color: #2563eb; background: linear-gradient(135deg, #eff6ff, #f8fafc); transform: scale(1.03); }
-  .price-card .tier { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
-  .price-card .price { font-size: 2.5rem; font-weight: 900; margin: 12px 0 4px; color: #0d1b3e; }
-  .price-card .price span { font-size: 1rem; font-weight: 400; color: #94a3b8; }
-  .price-card .desc { font-size: 0.9rem; color: #64748b; margin-bottom: 20px; }
-  .price-card ul { text-align: left; list-style: none; margin-bottom: 24px; }
-  .price-card ul li { padding: 6px 0; font-size: 0.9rem; color: #475569; }
-  .price-card ul li::before { content: 'â '; color: #16a34a; font-weight: 700; }
-
-  /* Screenshot */
-  .screenshot-section { background: #f1f5f9; padding: 60px 20px; text-align: center; }
-  .screenshot-section h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 24px; color: #0d1b3e; }
-  .screenshot-frame {
-    max-width: 900px; margin: 0 auto; border-radius: 12px; overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 3px solid #0d1b3e;
-    background: #1a1a2e; padding: 8px 8px 0;
-  }
-  .screenshot-frame .topbar {
-    display: flex; gap: 6px; padding: 6px 8px; margin-bottom: 6px;
-  }
-  .screenshot-frame .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .screenshot-frame .dot.r { background: #ff5f56; }
-  .screenshot-frame .dot.y { background: #ffbd2e; }
-  .screenshot-frame .dot.g { background: #27c93f; }
-  .screenshot-frame img, .screenshot-frame .placeholder {
-    width: 100%; border-radius: 0 0 6px 6px; display: block;
-  }
-  .screenshot-frame .placeholder {
-    background: linear-gradient(135deg, #0d1b3e, #1a2d5e);
-    color: white; padding: 80px 40px; font-size: 1.2rem; font-weight: 700;
-  }
-  .screenshot-frame .placeholder .features-list {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; text-align: left; font-size: 0.9rem; font-weight: 400; opacity: 0.8;
-  }
-
-  /* Data Source */
-  .data-source { background: #0d1b3e; color: white; padding: 60px 20px; text-align: center; }
-  .data-source h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 12px; }
-  .data-source p { max-width: 650px; margin: 0 auto 24px; opacity: 0.8; line-height: 1.6; }
-  .data-badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .data-badge {
-    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 8px; padding: 12px 20px; font-size: 0.85rem; font-weight: 600;
-  }
-
-  /* FAQ */
-  .faq-item { border-bottom: 1px solid #e2e8f0; padding: 20px 0; }
-  .faq-item h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: #0d1b3e; cursor: pointer; }
-  .faq-item p { font-size: 0.9rem; color: #64748b; line-height: 1.6; }
-
-  /* Footer */
-  footer { background: #0d1b3e; color: white; padding: 40px 20px; text-align: center; }
-  footer .brand { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
-  footer .brand span { color: #60a5fa; }
-  footer p { font-size: 0.85rem; opacity: 0.6; margin-top: 8px; line-height: 1.6; }
-  footer a { color: #60a5fa; text-decoration: none; }
-
-  /* Responsive */
-  @media (max-width: 640px) {
-    .hero h1 { font-size: 1.8rem; }
-    .hero p { font-size: 1rem; }
-    .stats { gap: 24px; }
-    .stat .num { font-size: 1.6rem; }
-    .steps { flex-direction: column; }
-    .screenshot-frame .placeholder .features-list { grid-template-columns: 1fr; }
+  /* Grid toggle button active state */
+  .draw-tool.grid-active {
+    background-color: #93c5fd !important;
+    border: 1px solid #3b82f6;
   }
 </style>
+<style>/* Tailwind CSS Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+}
+
+html {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+}
+
+body {
+  margin: 0;
+  line-height: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+hr {
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+}
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", Courier, monospace;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  font-size: 1em;
+}
+
+small {
+  font-size: 80%;
+}
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+:-moz-focusring {
+  outline: auto;
+}
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+progress {
+  vertical-align: baseline;
+}
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+[type='search'] {
+  -webkit-appearance: textfield;
+  outline-offset: -2px;
+}
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  font: inherit;
+}
+
+summary {
+  display: list-item;
+}
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+dialog {
+  padding: 0;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1;
+  color: #d1d5db;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+:disabled {
+  cursor: default;
+}
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  vertical-align: middle;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Tailwind Utility Classes */
+.bg-gray-100 { background-color: #f3f4f6; }
+.text-gray-900 { color: #111827; }
+.h-screen { height: 100vw; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.overflow-hidden { overflow: hidden; }
+.text-2xl { font-size: 1.5rem; }
+.font-bold { font-weight: 700; }
+.text-navy-900 { color: #0d1b3e; }
+.mb-3 { margin-bottom: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.text-gray-600 { color: #4b5563; }
+.mb-4 { margin-bottom: 1rem; }
+.bg-blue-50 { background-color: #eff6ff; }
+.border { border-width: 1px; border-style: solid; border-color: rgb(229, 231, 235); }
+.border-blue-200 { border-color: #bfdbfe; }
+.rounded-lg { border-radius: 0.5rem; }
+.p-3 { padding: 0.75rem; }
+.text-xs { font-size: 0.75rem; }
+.text-gray-700 { color: #374151; }
+.space-y-2 { & > :not(template) ~ :not(template) { margin-top: 0.5rem; } }
+.list-disc { list-style-type: disc; }
+.ml-4 { margin-left: 1rem; }
+.space-y-1 { & > :not(template) ~ :not(template) { margin-top: 0.25rem; } }
+.gap-2 { gap: 0.5rem; }
+.flex-1 { flex: 1 1 0%; }
+.bg-navy-900 { background-color: #0d1b3e; }
+.text-white { color: #ffffff; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.font-semibold { font-weight: 600; }
+.bg-navy-800 { background-color: #173175; }
+.hover\:bg-navy-800:hover { background-color: #173175; }
+.transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.h-12 { height: 3rem; }
+.z-50 { z-index: 50; }
+.flex-shrink-0 { flex-shrink: 0; }
+.text-lg { font-size: 1.125rem; }
+.font-extrabold { font-weight: 800; }
+.tracking-wide { letter-spacing: 0.025em; }
+.text-blue-300 { color: #93c5fd; }
+.text-[9px] { font-size: 9px; }
+.opacity-50 { opacity: 0.5; }
+.gap-1 { gap: 0.25rem; }
+.rounded-full { border-radius: 9999px; }
+.text-[13px] { font-size: 13px; }
+.border-white/15 { border-color: #ffffff; }
+.transition-all { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.bg-white/20 { background-color: #ffffff; }
+.border-white/35 { border-color: #ffffff; }
+.text-white/70 { color: #ffffff; }
+.bg-white/10 { background-color: #ffffff; }
+.hover\:bg-white/10:hover { background-color: #ffffff; }
+.gap-3 { gap: 0.75rem; }
+.text-[10px] { font-size: 10px; }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.bg-blue-500 { background-color: #3b82f6; }
+.bg-blue-600 { background-color: #2563eb; }
+.hover\:bg-blue-600:hover { background-color: #2563eb; }
+.h-full { height: 100%; }
+.w-[420px] { width: 420px; }
+.bg-white { background-color: #ffffff; }
+.border-r { border-right-width: 1px; border-right-style: solid; }
+.overflow-y-auto { overflow-y: auto; }
+.p-5 { padding: 1.25rem; }
+.text-gray-500 { color: #6b7280; }
+.space-y-3 { & > :not(template) ~ :not(template) { margin-top: 0.75rem; } }
+.block { display: block; }
+.mb-1 { margin-bottom: 0.25rem; }
+.w-full { width: 100%; }
+.my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.bg-gray-50 { background-color: #f9fafb; }
+.space-y-4 { & > :not(template) ~ :not(template) { margin-top: 1rem; } }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rounded-xl { border-radius: 0.75rem; }
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+.p-4 { padding: 1rem; }
+.text-center { text-align: center; }
+.text-3xl { font-size: 1.875rem; }
+.text-blue-600 { color: #2563eb; }
+.text-green-600 { color: #16a34a; }
+.text-left { text-align: left; }
+.p-2 { padding: 0.5rem; }
+.border-t { border-top-width: 1px; border-top-style: solid; }
+.bg-green-100 { background-color: #dcfce7; }
+.text-green-700 { color: #15803d; }
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.bg-yellow-100 { background-color: #fef9c3; }
+.text-yellow-700 { color: #a16207; }
+.w-1/2 { width: 50%; }
+.border-gray-300 { border-color: #d1d5db; }
+.border-b { border-bottom-width: 1px; border-bottom-style: solid; }
+.flex-wrap { flex-wrap: wrap; }
+.px-2.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+.rounded { border-radius: 0.25rem; }
+.bg-gray-200 { background-color: #e5e7eb; }
+.bg-gray-300 { background-color: #d1d5db; }
+.hover\:bg-gray-300:hover { background-color: #d1d5db; }
+.bg-blue-100 { background-color: #dbeafe; }
+.bg-blue-200 { background-color: #bfdbfe; }
+.hover\:bg-blue-200:hover { background-color: #bfdbfe; }
+.bg-red-100 { background-color: #fee2e2; }
+.bg-red-200 { background-color: #fecaca; }
+.hover\:bg-red-200:hover { background-color: #fecaca; }
+.text-red-700 { color: #b91c1c; }
+.cursor-crosshair { cursor: crosshair; }
+.border-l { border-left-width: 1px; border-left-style: solid; }
+.bg-white/15 { background-color: #ffffff; }
+.text-white/50 { color: #ffffff; }
+.justify-center { justify-content: center; }
+.overflow-auto { overflow: auto; }
+.resize-none { resize: none; }
+.mb-2 { margin-bottom: 0.5rem; }
+.text-amber-600 { color: #d97706; }
+.bg-navy-900/10 { background-color: rgba(13, 27, 62, 0.1); }
+.border-navy-900/20 { border-color: rgba(13, 27, 62, 0.2); }
+.text-4xl { font-size: 2.25rem; }
+.mt-1 { margin-top: 0.25rem; }
+.space-y-2 > :not(template) ~ :not(template) { margin-top: 0.5rem; }
+.space-y-1 > :not(template) ~ :not(template) { margin-top: 0.25rem; }
+.space-y-3 > :not(template) ~ :not(template) { margin-top: 0.75rem; }
+.space-y-4 > :not(template) ~ :not(template) { margin-top: 1rem; }
+</style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-900 h-screen flex flex-col overflow-hidden">
 
-<!-- HERO -->
-<div class="hero">
-  <div class="badge">Free for Architects â No Sign-up Required</div>
-  <h1>Aus<span>Build</span> Pro V4</h1>
-  <p>Give your clients <strong>instant preliminary budget estimates</strong> during Schematic Design. Calibrated with 170+ real AArch data points for <strong>Sydney &amp; Adelaide</strong>. Skip the $2,000 QS fee for early-stage feasibility.</p>
-  <div class="cta-group">
-    <a href="https://creative04lab.github.io/ausbuild-pro/AusBuild-Pro-V4-Free.html" class="btn btn-primary" target="_blank">Download Free Tool</a>
-    <a href="#pricing" class="btn btn-secondary">View Pro Plans</a>
-  </div>
-</div>
-
-<!-- STATS -->
-<div class="stats">
-  <div class="stat">
-    <div class="num">170+</div>
-    <div class="label">AArch Data Points</div>
-  </div>
-  <div class="stat">
-    <div class="num">Q1âQ9</div>
-    <div class="label">Quality Levels</div>
-  </div>
-  <div class="stat">
-    <div class="num">30s</div>
-    <div class="label">Budget Estimate</div>
-  </div>
-  <div class="stat">
-    <div class="num">$0</div>
-    <div class="label">Free to Use</div>
-  </div>
-</div>
-
-<!-- FEATURES -->
-<div class="section">
-  <h2>Built for Architects &amp; Design Firms</h2>
-  <p class="subtitle">Answer "How much will this cost?" in your next client meeting â with data-backed confidence.</p>
-  <div class="features">
-    <div class="feature-card">
-      <div class="icon">ð</div>
-      <h3>170+ AArch Calibrated</h3>
-      <p>Algorithm calibrated against 170 real scenarios from AAArchitect.com.au â the gold standard for Australian residential costing.</p>
+<!-- MODAL: About/Info -->
+<div id="aboutModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="text-2xl font-bold text-navy-900 mb-3">AusBuild Pro V5</h2>
+    <p class="text-sm text-gray-600 mb-4">
+      Professional lot yield calculator and design tool for Australian residential development.
+    </p>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-gray-700">
+      <p><strong>Version:</strong> 5.0 (Professional Enhanced)</p>
+      <p><strong>Regions:</strong> Western Australia R-Codes 2024 + South Australia Planning Codes 2020</p>
+      <p><strong>Features:</strong> Lot Yield Calculation, Design Canvas, Budget Estimation</p>
     </div>
-    <div class="feature-card">
-      <div class="icon">ðï¸</div>
-      <h3>Schematic Design Ready</h3>
-      <p>Generate preliminary budget estimates during early design phases. Give clients confident cost ranges before engaging a QS.</p>
+    <div class="space-y-2 text-xs text-gray-600 mb-4">
+      <p>This application helps developers:</p>
+      <ul class="list-disc ml-4 space-y-1">
+        <li>Calculate optimal lot yields based on R-Code and SA planning regulations</li>
+        <li>Design site layouts with architectural visualization</li>
+        <li>Estimate project budgets with Adelaide-specific cost benchmarks</li>
+        <li>Verify compliance with local planning requirements</li>
+      </ul>
     </div>
-    <div class="feature-card">
-      <div class="icon">â°ï¸</div>
-      <h3>Site &amp; Slope Analysis</h3>
-      <p>Flat, medium slope (10â25Â°), or steep (>25Â°). Site access factors automatically adjust the estimate range.</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon">ð</div>
-      <h3>Market Conditions</h3>
-      <p>Normal, Boom (+6.2%), or Recession market adjustments. Keep client expectations aligned with current market reality.</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon">ð</div>
-      <h3>Pool, External &amp; Driveway</h3>
-      <p>Quality-dependent pool rates, external area costing, and driveway calculations â all built into the estimate.</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon">ð</div>
-      <h3>Client-Ready PDF</h3>
-      <p>Export professional PDF reports with itemised breakdown. Present polished budget estimates to clients and stakeholders.</p>
+    <div class="flex gap-2">
+      <button onclick="closeAboutModal()" class="flex-1 bg-navy-900 text-white py-2 rounded-lg font-semibold hover:bg-navy-800 transition">
+        Close
+      </button>
     </div>
   </div>
 </div>
 
-<!-- SCREENSHOT / PREVIEW -->
-<div class="screenshot-section">
-  <h2>See It In Action</h2>
-  <div class="screenshot-frame">
-    <div class="topbar">
-      <div class="dot r"></div>
-      <div class="dot y"></div>
-      <div class="dot g"></div>
+<!-- TOP NAV -->
+<nav class="gradient-bg text-white px-5 flex items-center justify-between h-12 z-50 flex-shrink-0">
+  <div class="text-lg font-extrabold tracking-wide">
+    Aus<span class="text-blue-300">Build</span> Pro <sup class="text-[9px] opacity-50">V5</sup>
+  </div>
+  <div class="flex gap-1" id="nav-tabs">
+    <button onclick="switchTab('calc')" data-tab="calc" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35">📐 Lot Yield</button>
+    <button onclick="switchTab('design')" data-tab="design" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">🎨 Design AI</button>
+    <button onclick="switchTab('quote')" data-tab="quote" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">💰 Budget Estimate</button>
+  </div>
+  <div class="flex items-center gap-3">
+    <button onclick="saveToPDF()" class="px-3 py-1 text-xs bg-green-500 rounded-full hover:bg-green-600 transition">💾 Save as PDF</button>
+    <span class="text-[10px] opacity-50">V5 Enhanced | Multi-Region</span>
+    <button onclick="openAboutModal()" class="px-3 py-1 text-xs bg-blue-500 rounded-full hover:bg-blue-600">Info</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="flex-1 overflow-hidden">
+
+<!-- ===== TAB 1: LOT YIELD ===== -->
+<div id="tab-calc" class="tab-content active h-full">
+  <div class="flex h-full">
+    <!-- Left Panel -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">📐 Lot Yield Calculator</h2>
+      <p class="text-xs text-gray-500 mb-4">WA R-Codes & SA Planning Codes</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Code System</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="codeSystem" onchange="updateCodeOptions(); calcYield()">
+            <option value="wa">WA R-Codes</option>
+            <option value="sa">SA Planning Codes</option>
+          </select>
+        </div>
+
+        <!-- WA Section -->
+        <div id="waSection">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">R-Code Density</label>
+            <select class="w-full border rounded-lg px-3 py-2 text-sm" id="rCode" onchange="calcYield()">
+              <option value="R20">R20 — Low Density</option>
+              <option value="R25">R25 — Low-Medium</option>
+              <option value="R30" selected>R30 — Medium</option>
+              <option value="R35">R35 — Medium</option>
+              <option value="R40">R40 — Medium-High</option>
+              <option value="R60">R60 — High</option>
+              <option value="R80">R80 — Very High</option>
+              <option value="R100">R100 — Multi</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- SA Section (hidden by default) -->
+        <div id="saSection" style="display: none;">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">SA Planning Zone</label>
+            <select class="w-full border rounded-lg px-3 py-2 text-sm" id="saZone" onchange="calcYield()">
+              <option value="res_neigh">Residential Neighbourhood</option>
+              <option value="gen_neigh">General Neighbourhood</option>
+              <option value="urb_corr">Urban Corridor</option>
+              <option value="urb_neigh" selected>Urban Neighbourhood</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-2 px-1">Based on SA Planning Code 2020</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Dwelling Type</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="dwType" onchange="calcYield()">
+            <option value="single">Single House</option>
+            <option value="grouped">Grouped Dwelling</option>
+            <option value="multiple">Multiple Dwelling</option>
+          </select>
+        </div>
+        <hr class="my-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Total Area (m²)</label>
+            <input type="number" value="850" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="totalArea" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Frontage (m)</label>
+            <input type="number" value="20" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="frontage" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Depth (m)</label>
+            <input type="number" value="42.5" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="depth" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Truncation (m²)</label>
+            <input type="number" value="0" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="truncation" onchange="calcYield()">
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isCorner" onchange="calcYield()"> Corner Lot</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="isBattleaxe" onchange="calcYield()"> Battle-axe</label>
+        </div>
+
+        <!-- Heritage Overlay Checkbox -->
+        <div class="mt-3">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="heritageOverlay" onchange="toggleHeritageWarning()"> Heritage Overlay</label>
+          <div id="heritageWarning" class="warning-banner" style="display: none;">
+            ⚠️ Heritage Overlay may restrict lot division and dwelling design. Verify with local council.
+          </div>
+        </div>
+
+        <button onclick="calcYield()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          ⚡ Calculate Yield
+        </button>
+
+        <!-- Export to Budget Button -->
+        <button onclick="exportToBudget()" class="w-full mt-2 bg-blue-500 text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition">
+          → Export to Budget
+        </button>
+      </div>
     </div>
-    <div class="placeholder">
-      AusBuild Pro V4 â Preliminary Budget Estimator
-      <div class="features-list">
-        <div>Build Type: New Build / A&amp;A / Reno</div>
-        <div>Quality: Q1âQ9 Scale</div>
-        <div>Internal Area: mÂ² input</div>
-        <div>Site: Flat / Slope / Steep</div>
-        <div>Market: Normal / Boom / Recession</div>
-        <div>Contingency &amp; Margin Controls</div>
-        <div>Pool &amp; External Areas</div>
-        <div>Client-Ready PDF Export</div>
+    <!-- Right Panel: Results -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Lot Count</div>
+            <div class="text-3xl font-bold text-navy-900" id="lotCount">2</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Avg Per Lot</div>
+            <div class="text-2xl font-bold text-blue-600" id="avgPerLot">425 m²</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Effective Area</div>
+            <div class="text-2xl font-bold text-green-600" id="effectiveArea">850 m²</div>
+          </div>
+        </div>
+        <!-- Detailed Results -->
+        <div class="bg-white rounded-xl shadow-sm p-4 space-y-3">
+          <h3 class="font-semibold text-navy-900">Calculation Details</h3>
+          <table class="w-full text-sm">
+            <tbody>
+              <tr class="cost-row">
+                <td class="text-gray-600">Total Site Area</td>
+                <td class="text-right font-semibold" id="detailTotalArea">850 m²</td>
+              </tr>
+              <tr class="cost-row">
+                <td class="text-gray-600">Open Space Required</td>
+                <td class="text-right font-semibold" id="detailOpenSpace">0 m²</td>
+              </tr>
+              <tr class="cost-row">
+                <td class="text-gray-600">Road/Services Area</td>
+                <td class="text-right font-semibold" id="detailRoadArea">0 m²</td>
+              </tr>
+              <tr class="cost-row">
+                <td class="text-gray-600">Minimum Lot Size</td>
+                <td class="text-right font-semibold" id="detailMinLot">425 m²</td>
+              </tr>
+              <tr>
+                <td class="text-gray-600 font-semibold">Surplus Area</td>
+                <td class="text-right font-bold text-blue-600" id="detailSurplus">0 m²</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Compliance Notes -->
+        <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
+          <h3 class="font-semibold text-navy-900 mb-2">Compliance Notes</h3>
+          <ul class="text-xs text-gray-700 space-y-1 list-disc ml-4">
+            <li id="note1">Minimum frontage for R-Codes may vary by lot type</li>
+            <li id="note2">Corner lots may have additional requirements</li>
+            <li id="note3">Battle-axe lots require separate access determination</li>
+            <li id="note4">Always verify with local council before development</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- HOW IT WORKS -->
-<div class="section">
-  <h2>How It Works</h2>
-  <p class="subtitle">Three simple steps. No account needed.</p>
-  <div class="steps">
-    <div class="step">
-      <div class="num">1</div>
-      <h3>Download</h3>
-      <p>Get the free HTML file. No installation â runs offline in any browser, even during client site visits.</p>
-    </div>
-    <div class="step">
-      <div class="num">2</div>
-      <h3>Enter Project Brief</h3>
-      <p>Set build type, quality level, area, site conditions, and market â takes 30 seconds during a meeting.</p>
-    </div>
-    <div class="step">
-      <div class="num">3</div>
-      <h3>Present to Client</h3>
-      <p>Instant lowâhigh budget range with itemised breakdown. Export a professional PDF on the spot.</p>
-    </div>
-  </div>
-</div>
+<!-- ===== TAB 2: DESIGN AI ===== -->
+<div id="tab-design" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- Canvas Area -->
+    <div class="flex-1 bg-white border-r overflow-hidden flex flex-col">
+      <!-- Toolbar -->
+      <div class="bg-white border-b flex items-center gap-2 px-4 py-3 flex-wrap">
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('pen')">✏️ Pen</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('eraser')">🧹 Eraser</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('rectangle')">▭ Rectangle</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('circle')">⊙ Circle</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('line')">/ Line</button>
 
-<!-- DATA SOURCE -->
-<div class="data-source">
-  <h2>Trusted Data Source</h2>
-  <p>Our algorithm is calibrated using 170+ real scenarios from AAArchitect.com.au â Australia's most respected residential building cost calculator. Every quality level, slope condition, and market scenario has been verified against real data.</p>
-  <div class="data-badges">
-    <div class="data-badge">AAArchitect.com.au</div>
-    <div class="data-badge">Sydney Market 2025â26</div>
-    <div class="data-badge">170+ Verified Scenarios</div>
-    <div class="data-badge">Updated Quarterly</div>
-  </div>
-</div>
+        <!-- New Drawing Tools -->
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('label')">🏷️ Label</button>
 
-<!-- PRICING -->
-<div class="section" id="pricing">
-  <h2>Simple Pricing</h2>
-  <p class="subtitle">Start free. Upgrade when you're ready.</p>
-  <div class="pricing">
-    <div class="price-card">
-      <div class="tier">Free</div>
-      <div class="price">$0</div>
-      <div class="desc">Full features, no expiry</div>
-      <ul>
-        <li>Full Q1âQ9 quality estimation</li>
-        <li>Slope &amp; market adjustments</li>
-        <li>Pool, external &amp; driveway</li>
-        <li>PDF export (with watermark)</li>
-        <li>Offline â works without internet</li>
-      </ul>
-      <a href="https://creative04lab.github.io/ausbuild-pro/AusBuild-Pro-V4-Free.html" class="btn btn-primary" style="width:100%;justify-content:center;" target="_blank">Download Free</a>
+        <div class="border-l border-gray-300 mx-2 h-6"></div>
+
+        <!-- Scale Indicator -->
+        <select class="px-2 py-1 text-sm border rounded bg-gray-50" id="scaleSelect" onchange="updateScale()">
+          <option value="1:100" selected>Scale: 1:100</option>
+          <option value="1:200">Scale: 1:200</option>
+          <option value="1:500">Scale: 1:500</option>
+        </select>
+
+        <!-- Scale Display Indicator -->
+        <div class="scale-indicator" id="scaleIndicator">100mm = 10m</div>
+
+        <!-- Grid Toggle -->
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" id="gridToggleBtn" onclick="toggleGrid()">⊞ Grid</button>
+
+        <div class="border-l border-gray-300 mx-2 h-6"></div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-600">Pen Width:</label>
+          <input type="range" min="1" max="10" value="2" id="penWidth" class="w-20" onchange="updatePenSettings()">
+          <span class="text-xs" id="penWidthValue">2</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-600">Color:</label>
+          <input type="color" value="#000000" id="penColor" class="w-8 h-8 rounded cursor-pointer" onchange="updatePenSettings()">
+        </div>
+        <button class="view-btn px-3 py-2 bg-red-100 hover:bg-red-200 rounded text-sm font-semibold" onclick="clearCanvas()">🗑️ Clear</button>
+      </div>
+      <!-- Canvas -->
+      <canvas id="canvas" class="flex-1 bg-white cursor-crosshair"></canvas>
     </div>
-    <div class="price-card featured">
-      <div class="tier">Pro â Solo Practice</div>
-      <div class="price">$29 <span>/ month</span></div>
-      <div class="desc">or $149 one-time buy</div>
-      <ul>
-        <li>Everything in Free</li>
-        <li>No watermark â your firm's branding</li>
-        <li>Custom company logo on PDF</li>
-        <li>Email support</li>
-        <li>Quarterly data updates</li>
-        <li>Priority feature requests</li>
-      </ul>
-      <a href="https://freshvision.gumroad.com/l/ausbuild-pro" class="btn btn-green" style="width:100%;justify-content:center;" target="_blank">Get Pro</a>
-    </div>
-    <div class="price-card">
-      <div class="tier">Pro â Studio (3 seats)</div>
-      <div class="price">$59 <span>/ month</span></div>
-      <div class="desc">or $299 one-time buy</div>
-      <ul>
-        <li>Everything in Pro Solo</li>
-        <li>3 team user licenses</li>
-        <li>1-on-1 onboarding call</li>
-        <li>Custom data calibration</li>
-        <li>Multi-city support (coming soon)</li>
-      </ul>
-      <a href="mailto:weichengliu404@gmail.com?subject=AusBuild Pro Studio Inquiry" class="btn btn-primary" style="width:100%;justify-content:center;">Contact Us</a>
+
+    <!-- Right Panel: AI Design Controls -->
+    <div class="w-[420px] bg-white border-l overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">🎨 Design Assistant</h2>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-2">Design Brief</label>
+          <textarea id="aiPromptInput" class="w-full border rounded-lg px-3 py-2 text-sm resize-none" rows="6" placeholder="Describe your design intent here. Example: Modern residential townhouses with green spaces, parking underneath, 2-3 storeys, family-friendly layout..."></textarea>
+        </div>
+        <button id="generateBtn" onclick="generateAIDesign()" class="w-full bg-blue-500 text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition">
+          ✨ Generate Layout
+        </button>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-gray-700">
+          <p class="font-semibold mb-1">💡 Tips for better designs:</p>
+          <ul class="list-disc ml-4 space-y-1">
+            <li>Specify density (low, medium, high)</li>
+            <li>Mention key features (parking, gardens, terraces)</li>
+            <li>Note site constraints (slopes, views, orientation)</li>
+            <li>Include desired aesthetic style</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- FAQ -->
-<div class="section">
-  <h2>FAQ</h2>
-  <div class="faq-item">
-    <h3>How accurate are the preliminary estimates?</h3>
-    <p>Our algorithm is calibrated with 170+ real data points from AAArchitect.com.au. For Schematic Design stage budgeting, accuracy is typically within Â±10-15% â comparable to a conceptual QS estimate. For contract-stage pricing, always engage a registered Quantity Surveyor.</p>
-  </div>
-  <div class="faq-item">
-    <h3>Does this replace a Quantity Surveyor?</h3>
-    <p>No â it replaces the <em>need for a QS at Schematic Design stage</em>. Use AusBuild Pro for early feasibility, client budget discussions, and project screening. Engage a QS at Design Development stage for detailed cost plans and DA submissions.</p>
-  </div>
-  <div class="faq-item">
-    <h3>What areas does it cover?</h3>
-    <p>Currently optimised for Sydney (NSW) and Adelaide (SA) residential projects â new builds, additions, and renovations. Melbourne and Brisbane support is on the roadmap.</p>
-  </div>
-  <div class="faq-item">
-    <h3>Can I use it during client meetings?</h3>
-    <p>Yes â it's a single HTML file that works offline in any browser. Open it on your laptop during a meeting, enter the project parameters, and show clients an instant budget range. No internet required.</p>
-  </div>
-  <div class="faq-item">
-    <h3>How do I get support?</h3>
-    <p>Email us at <a href="mailto:weichengliu404@gmail.com">weichengliu404@gmail.com</a>. Pro users get priority response within 24 hours.</p>
+<!-- ===== TAB 3: BUDGET ESTIMATE ===== -->
+<div id="tab-quote" class="tab-content h-full">
+  <div class="flex h-full">
+    <!-- Left Panel: Inputs -->
+    <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
+      <h2 class="text-lg font-bold text-navy-900 mb-4">💰 Budget Estimate</h2>
+      <p class="text-xs text-gray-500 mb-4">Adelaide-Specific Cost Benchmarks</p>
+
+      <div class="space-y-3">
+        <!-- Receive from Lot Yield -->
+        <button onclick="receiveFromLotYield()" class="w-full bg-blue-500 text-white py-2 rounded-lg font-bold hover:bg-blue-600 transition text-sm">
+          ← Receive from Lot Yield
+        </button>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Dwelling Count</label>
+            <input type="number" value="2" min="1" class="w-full border rounded-lg px-3 py-2 text-sm" id="dwellingCount" onchange="updateBudget()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Total Area (m²)</label>
+            <input type="number" value="850" min="0" class="w-full border rounded-lg px-3 py-2 text-sm" id="budgetArea" onchange="updateBudget()">
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- Quality/Cost Benchmark Selector -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Quality Benchmark</label>
+          <select class="w-full border rounded-lg px-3 py-2 text-sm" id="qualityLevel" onchange="updateBudget()">
+            <option value="standard">Standard: $1,800/m²</option>
+            <option value="midrange" selected>Mid-range: $2,400/m²</option>
+            <option value="highend">High-end: $3,200/m²</option>
+          </select>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3 text-xs text-gray-700">
+          <p><strong>Selected Cost/m²:</strong> <span id="costPerM2">$2,400</span></p>
+        </div>
+
+        <hr class="my-3">
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-2">Additional Parameters</label>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-sm">
+              <span>Design Fees (% of construction):</span>
+              <input type="number" value="10" min="0" max="100" class="w-20 border rounded px-2 py-1 text-sm" id="designFeePercent" onchange="updateBudget()">%
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <span>Council Fees (fixed):</span>
+              <input type="number" value="3000" min="0" class="w-20 border rounded px-2 py-1 text-sm" id="councilFee" onchange="updateBudget()">
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <span>Contingency (% of construction):</span>
+              <input type="number" value="10" min="0" max="100" class="w-20 border rounded px-2 py-1 text-sm" id="contingencyPercent" onchange="updateBudget()">%
+            </div>
+          </div>
+        </div>
+
+        <button onclick="updateBudget()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
+          🧮 Calculate Budget
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Results -->
+    <div class="flex-1 bg-gray-50 overflow-y-auto p-5">
+      <div class="space-y-4">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Total Budget</div>
+            <div class="text-2xl font-bold text-green-600" id="totalBudget">$2,040,000</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Cost per Dwelling</div>
+            <div class="text-2xl font-bold text-blue-600" id="costPerDwelling">$1,020,000</div>
+          </div>
+        </div>
+
+        <!-- Budget Breakdown -->
+        <div class="bg-white rounded-xl shadow-sm p-4 space-y-2">
+          <h3 class="font-semibold text-navy-900 mb-3">Budget Breakdown</h3>
+          <table class="w-full text-sm">
+            <tbody>
+              <tr class="cost-row">
+                <td class="text-gray-600">Construction Cost</td>
+                <td class="text-right" id="constructionCost">$2,040,000</td>
+              </tr>
+              <tr class="cost-row">
+                <td class="text-gray-600">Design Fees (10%)</td>
+                <td class="text-right" id="designFees">$204,000</td>
+              </tr>
+              <tr class="cost-row">
+                <td class="text-gray-600">Council Fees</td>
+                <td class="text-right" id="councilFees">$3,000</td>
+              </tr>
+              <tr class="cost-row">
+                <td class="text-gray-600">Contingency (10%)</td>
+                <td class="text-right" id="contingencyAmount">$204,000</td>
+              </tr>
+              <tr class="border-t-2 border-gray-300">
+                <td class="text-gray-900 font-bold py-2">Total Project Cost</td>
+                <td class="text-right font-bold text-green-600 py-2" id="projectTotal">$2,451,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Cost per m² KPI -->
+        <div class="bg-green-100 rounded-xl border border-green-300 p-4 text-center">
+          <div class="text-xs text-gray-700 uppercase tracking-wide">Cost per m²</div>
+          <div class="text-3xl font-bold text-green-700" id="costPerM2Total">$2,400</div>
+        </div>
+
+        <!-- Price Comparison Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <h3 class="font-semibold text-navy-900 mb-3">Quality Comparison</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between items-center">
+              <span>Standard ($1,800/m²)</span>
+              <div class="w-32 bg-gray-200 h-4 rounded" style="background: linear-gradient(90deg, #10b981 0%, #10b981 50%); width: 50%;"></div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>Mid-range ($2,400/m²)</span>
+              <div class="w-32 bg-gray-200 h-4 rounded" style="background: linear-gradient(90deg, #3b82f6 0%, #3b82f6 67%); width: 67%;"></div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>High-end ($3,200/m²)</span>
+              <div class="w-32 bg-gray-200 h-4 rounded" style="background: linear-gradient(90deg, #f59e0b 0%, #f59e0b 89%); width: 89%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- FEEDBACK -->
-<div style="background:#f1f5f9;padding:40px 20px;text-align:center;">
-  <h2 style="font-size:1.5rem;font-weight:800;color:#0d1b3e;margin-bottom:12px;">We'd Love Your Feedback</h2>
-  <p style="color:#64748b;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto;">Help us improve AusBuild Pro. Tell us what works, what doesn't, and what features you need most.</p>
-  <a href="mailto:support@freshvision.com.au?subject=AusBuild%20Feedback" class="btn btn-primary" target="_blank">Share Feedback (2 min)</a>
-</div>
+</div><!-- End of flex-1 overflow-hidden -->
 
-<!-- FOOTER -->
-<footer>
-  <div class="brand">Aus<span>Build</span> Pro</div>
-  <p>Preliminary budget estimator for Australian architects &amp; design firms.</p>
-  <p>Calibrated with 170+ AArch data points | Sydney &amp; Adelaide</p>
-  <p style="margin-top:16px;">
-    <a href="mailto:weichengliu404@gmail.com">weichengliu404@gmail.com</a>
-  </p>
-  <p style="margin-top:20px;font-size:0.75rem;opacity:0.4;">
-    Disclaimer: AusBuild Pro provides preliminary budget estimates for feasibility and planning purposes only.
-    Estimates are not formal quotations. For contract-stage pricing, always consult a registered Quantity Surveyor
-    or obtain competitive builder quotes. Data calibrated from publicly available sources.
-  </p>
-</footer>
+<script>
+// ===== GLOBAL STATE =====
+let currentTab = 'calc';
+let drawMode = 'pen';
+let isDrawing = false;
+let canvas, ctx;
+let lastX = 0, lastY = 0;
+let gridVisible = false;
+let currentScale = '1:100';
 
+// ===== TAB SWITCHING =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('bg-white/20', 'border-white/35'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('bg-white/20', 'border-white/35');
+  currentTab = tab;
+
+  if (tab === 'design') {
+    setTimeout(() => {
+      initCanvas();
+    }, 100);
+  }
+}
+
+// ===== MODAL FUNCTIONS =====
+function openAboutModal() {
+  document.getElementById('aboutModal').classList.add('active');
+}
+
+function closeAboutModal() {
+  document.getElementById('aboutModal').classList.remove('active');
+}
+
+// ===== SAVE TO PDF =====
+function saveToPDF() {
+  window.print();
+}
+
+// ===== TAB 1: LOT YIELD CALCULATOR =====
+
+function updateCodeOptions() {
+  const system = document.getElementById('codeSystem').value;
+  document.getElementById('waSection').style.display = system === 'wa' ? 'block' : 'none';
+  document.getElementById('saSection').style.display = system === 'sa' ? 'block' : 'none';
+}
+
+function toggleHeritageWarning() {
+  const isChecked = document.getElementById('heritageOverlay').checked;
+  document.getElementById('heritageWarning').style.display = isChecked ? 'block' : 'none';
+}
+
+const rCodeMinLots = {
+  'R20': 2000, 'R25': 1600, 'R30': 1300, 'R35': 1000,
+  'R40': 800, 'R60': 500, 'R80': 400, 'R100': 300
+};
+
+// SA zones have different minimum lot sizes
+const saZoneMinLots = {
+  'res_neigh': 700,
+  'gen_neigh': 550,
+  'urb_corr': 350,
+  'urb_neigh': 600
+};
+
+function calcYield() {
+  const system = document.getElementById('codeSystem').value;
+  const totalArea = parseFloat(document.getElementById('totalArea').value) || 0;
+  const frontage = parseFloat(document.getElementById('frontage').value) || 0;
+  const depth = parseFloat(document.getElementById('depth').value) || 0;
+  const truncation = parseFloat(document.getElementById('truncation').value) || 0;
+  const isCorner = document.getElementById('isCorner').checked;
+  const isBattleaxe = document.getElementById('isBattleaxe').checked;
+
+  let minLotSize = 400;
+
+  if (system === 'wa') {
+    const rCode = document.getElementById('rCode').value;
+    minLotSize = rCodeMinLots[rCode] || 400;
+  } else {
+    const saZone = document.getElementById('saZone').value;
+    minLotSize = saZoneMinLots[saZone] || 400;
+  }
+
+  const effectiveArea = totalArea - truncation;
+  const openSpace = effectiveArea * 0.15;
+  const roadArea = effectiveArea * 0.08;
+  const developableArea = effectiveArea - openSpace - roadArea;
+
+  let lotCount = Math.floor(developableArea / minLotSize);
+  let avgPerLot = developableArea / (lotCount || 1);
+  let surplus = developableArea - (lotCount * minLotSize);
+
+  // Apply modifiers
+  if (isCorner) lotCount = Math.max(1, lotCount - 1);
+  if (isBattleaxe) lotCount = Math.max(1, lotCount - 1);
+
+  document.getElementById('lotCount').innerText = lotCount;
+  document.getElementById('avgPerLot').innerText = Math.round(avgPerLot) + ' m²';
+  document.getElementById('effectiveArea').innerText = Math.round(effectiveArea) + ' m²';
+
+  document.getElementById('detailTotalArea').innerText = Math.round(totalArea) + ' m²';
+  document.getElementById('detailOpenSpace').innerText = Math.round(openSpace) + ' m²';
+  document.getElementById('detailRoadArea').innerText = Math.round(roadArea) + ' m²';
+  document.getElementById('detailMinLot').innerText = minLotSize + ' m²';
+  document.getElementById('detailSurplus').innerText = Math.round(surplus) + ' m²';
+
+  // Store for export
+  window.lotYieldData = {
+    lotCount: lotCount,
+    area: effectiveArea
+  };
+}
+
+function exportToBudget() {
+  if (!window.lotYieldData) {
+    alert('Please calculate yield first');
+    return;
+  }
+  document.getElementById('dwellingCount').value = window.lotYieldData.lotCount;
+  document.getElementById('budgetArea').value = Math.round(window.lotYieldData.area);
+  switchTab('quote');
+  updateBudget();
+}
+
+// ===== TAB 2: DESIGN AI =====
+
+function initCanvas() {
+  canvas = document.getElementById('canvas');
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+
+  if (gridVisible) {
+    drawGrid();
+  }
+
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+}
+
+function startDrawing(e) {
+  const rect = canvas.getBoundingClientRect();
+  lastX = e.clientX - rect.left;
+  lastY = e.clientY - rect.top;
+  isDrawing = true;
+}
+
+function draw(e) {
+  if (!isDrawing || !ctx) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const width = document.getElementById('penWidth').value;
+  const color = document.getElementById('penColor').value;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (drawMode === 'pen') {
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  } else if (drawMode === 'eraser') {
+    ctx.clearRect(x - width, y - width, width * 2, width * 2);
+  }
+
+  lastX = x;
+  lastY = y;
+}
+
+function stopDrawing() {
+  isDrawing = false;
+}
+
+function setDrawMode(mode) {
+  drawMode = mode;
+  const canvas = document.getElementById('canvas');
+  if (mode === 'pen' || mode === 'eraser' || mode === 'label') {
+    canvas.style.cursor = 'crosshair';
+  } else {
+    canvas.style.cursor = 'default';
+  }
+}
+
+function updatePenSettings() {
+  const width = document.getElementById('penWidth').value;
+  document.getElementById('penWidthValue').innerText = width;
+}
+
+function clearCanvas() {
+  if (ctx && canvas) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (gridVisible) drawGrid();
+  }
+}
+
+function drawGrid() {
+  if (!ctx || !canvas) return;
+  const gridSize = 20;
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.lineWidth = 0.5;
+
+  for (let x = 0; x < canvas.width; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+}
+
+function toggleGrid() {
+  gridVisible = !gridVisible;
+  const gridBtn = document.getElementById('gridToggleBtn');
+
+  if (gridVisible) {
+    gridBtn.classList.add('grid-active');
+  } else {
+    gridBtn.classList.remove('grid-active');
+  }
+
+  if (!ctx || !canvas) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (gridVisible) drawGrid();
+}
+
+function updateScale() {
+  currentScale = document.getElementById('scaleSelect').value;
+  const scaleIndicator = document.getElementById('scaleIndicator');
+
+  const scaleDescriptions = {
+    '1:100': '100mm = 10m',
+    '1:200': '100mm = 20m',
+    '1:500': '100mm = 50m'
+  };
+
+  scaleIndicator.innerText = scaleDescriptions[currentScale] || '100mm = 10m';
+}
+
+function generateAIDesign() {
+  const prompt = document.getElementById('aiPromptInput').value;
+  if (!prompt.trim()) {
+    alert('Please enter a design brief');
+    return;
+  }
+  alert('Design generation would integrate with AI API. Design brief: ' + prompt.substring(0, 50) + '...');
+}
+
+// ===== TAB 3: BUDGET ESTIMATE =====
+
+const costBenchmarks = {
+  'standard': 1800,
+  'midrange': 2400,
+  'highend': 3200
+};
+
+function receiveFromLotYield() {
+  if (!window.lotYieldData) {
+    alert('Please calculate yield in Lot Yield tab first');
+    return;
+  }
+  document.getElementById('dwellingCount').value = window.lotYieldData.lotCount;
+  document.getElementById('budgetArea').value = Math.round(window.lotYieldData.area);
+  updateBudget();
+}
+
+function updateBudget() {
+  const dwellingCount = parseInt(document.getElementById('dwellingCount').value) || 1;
+  const area = parseFloat(document.getElementById('budgetArea').value) || 0;
+  const quality = document.getElementById('qualityLevel').value;
+  const costPerM2 = costBenchmarks[quality] || 2400;
+  const designFeePercent = parseFloat(document.getElementById('designFeePercent').value) || 10;
+  const councilFee = parseFloat(document.getElementById('councilFee').value) || 3000;
+  const contingencyPercent = parseFloat(document.getElementById('contingencyPercent').value) || 10;
+
+  // Display selected cost
+  document.getElementById('costPerM2').innerText = '$' + costPerM2.toLocaleString();
+
+  // Calculate costs
+  const constructionCost = area * costPerM2;
+  const designFees = (constructionCost * designFeePercent) / 100;
+  const contingency = (constructionCost * contingencyPercent) / 100;
+  const totalBudget = constructionCost + designFees + councilFee + contingency;
+  const costPerDwelling = totalBudget / (dwellingCount || 1);
+
+  // Update display
+  document.getElementById('constructionCost').innerText = '$' + Math.round(constructionCost).toLocaleString();
+  document.getElementById('designFees').innerText = '$' + Math.round(designFees).toLocaleString();
+  document.getElementById('councilFees').innerText = '$' + Math.round(councilFee).toLocaleString();
+  document.getElementById('contingencyAmount').innerText = '$' + Math.round(contingency).toLocaleString();
+  document.getElementById('projectTotal').innerText = '$' + Math.round(totalBudget).toLocaleString();
+  document.getElementById('totalBudget').innerText = '$' + Math.round(totalBudget).toLocaleString();
+  document.getElementById('costPerDwelling').innerText = '$' + Math.round(costPerDwelling).toLocaleString();
+  document.getElementById('costPerM2Total').innerText = '$' + Math.round(costPerM2).toLocaleString();
+}
+
+// ===== INIT =====
+window.addEventListener('load', () => {
+  calcYield();
+  updateBudget();
+});
+</script>
 </body>
 </html>
