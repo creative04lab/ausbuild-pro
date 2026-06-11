@@ -1298,6 +1298,13 @@ table td{border-bottom:1px solid var(--line)!important;}
 canvas{background:#fff;}
 ::selection{background:var(--accent);color:#fff;}
 ::placeholder{color:#b8b2a2!important;}
+/* final fixes */
+.tab-btn{border-top:none!important;border-left:none!important;border-right:none!important;}
+.bg-navy-900,button[onclick*="calcYield"],button[onclick*="updateBudget"]{background:var(--ink)!important;color:var(--paper)!important;letter-spacing:.22em!important;text-transform:uppercase!important;font-size:10.5px!important;font-weight:500!important;padding:1.15rem 2rem!important;transition:background .3s!important;}
+.bg-navy-900:hover,button[onclick*="calcYield"]:hover,button[onclick*="updateBudget"]:hover{background:var(--accent)!important;}
+button[onclick*="exportToBudget"],button[onclick*="receiveFrom"]{background:transparent!important;color:var(--ink)!important;border:1px solid var(--ink)!important;letter-spacing:.22em!important;text-transform:uppercase!important;font-size:10.5px!important;font-weight:500!important;padding:1.05rem 2rem!important;transition:all .3s!important;}
+button[onclick*="exportToBudget"]:hover,button[onclick*="receiveFrom"]:hover{background:var(--ink)!important;color:var(--paper)!important;}
+.text-2xl{font-family:'Cormorant Garamond',Georgia,serif!important;font-size:2.6rem!important;font-weight:500!important;line-height:1.05!important;}
 </style>
 <script id="arch-script">
 (function(){
