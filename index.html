@@ -564,14 +564,19 @@ video {
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">R-Code Density</label>
             <select class="w-full border rounded-lg px-3 py-2 text-sm" id="rCode" onchange="calcYield()">
-              <option value="R20">R20 — Low Density</option>
+              <option value="R10">R10 — Very Low</option>
+              <option value="R12.5">R12.5 — Very Low</option>
+              <option value="R15">R15 — Low</option>
+              <option value="R17.5">R17.5 — Low</option>
+              <option value="R20">R20 — Low</option>
               <option value="R25">R25 — Low-Medium</option>
               <option value="R30" selected>R30 — Medium</option>
               <option value="R35">R35 — Medium</option>
               <option value="R40">R40 — Medium-High</option>
+              <option value="R50">R50 — High</option>
               <option value="R60">R60 — High</option>
               <option value="R80">R80 — Very High</option>
-              <option value="R100">R100 — Multi</option>
+              <option value="R100">R100-SL — Small Lot</option>
             </select>
           </div>
         </div>
@@ -630,6 +635,8 @@ video {
           </div>
         </div>
 
+        <div id="frontageWarn" class="warning-banner" style="display:none"></div>
+
         <button onclick="calcYield()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
            Calculate Yield
         </button>
@@ -676,7 +683,7 @@ video {
                 <td class="text-right font-semibold" id="detailRoadArea">0 m²</td>
               </tr>
               <tr class="cost-row">
-                <td class="text-gray-600">Minimum Lot Size</td>
+                <td class="text-gray-600">Site Area / Dwelling (min · av)</td>
                 <td class="text-right font-semibold" id="detailMinLot">425 m²</td>
               </tr>
               <tr>
@@ -968,9 +975,21 @@ function toggleHeritageWarning() {
   document.getElementById('heritageWarning').style.display = isChecked ? 'block' : 'none';
 }
 
-const rCodeMinLots = {
-  'R20': 2000, 'R25': 1600, 'R30': 1300, 'R35': 1000,
-  'R40': 800, 'R60': 500, 'R80': 400, 'R100': 300
+// R-Codes 2024 Table D - Site area requirements (r-codes-volume-1-2024-mar2024.pdf, p.125-126)
+const RCODE_TABLE = {
+  'R10':  { single:{min:875,avg:1000,ba:925,fr:20}, grouped:{min:875,avg:1000}, multiple:{avg:1000} },
+  'R12.5':{ single:{min:700,avg:800,ba:762.5,fr:17}, grouped:{min:700,avg:800}, multiple:{avg:800} },
+  'R15':  { single:{min:580,avg:666,ba:655,fr:12}, grouped:{min:580,avg:666}, multiple:{avg:666} },
+  'R17.5':{ single:{min:500,avg:571,ba:587.5,fr:12}, grouped:{min:500,avg:571}, multiple:{avg:571} },
+  'R20':  { single:{min:350,avg:450,ba:450,fr:10}, grouped:{min:350,avg:450}, multiple:{avg:450} },
+  'R25':  { single:{min:300,avg:350,ba:425,fr:8}, grouped:{min:300,avg:350}, multiple:{avg:350} },
+  'R30':  { single:{min:260,avg:300,ba:410}, grouped:{min:260,avg:300}, multiple:{avg:300} },
+  'R35':  { single:{min:220,avg:260,ba:395}, grouped:{min:220,avg:260}, multiple:{avg:260} },
+  'R40':  { single:{min:180,avg:220,ba:380}, grouped:{min:180,avg:220}, multiple:{avg:115} },
+  'R50':  { single:{min:160,avg:180,ba:160}, grouped:{min:160,avg:180}, multiple:{avg:100} },
+  'R60':  { single:{min:120,avg:150,ba:120}, grouped:{min:120,avg:150}, multiple:{avg:85} },
+  'R80':  { single:{min:100,avg:120,ba:100}, grouped:{min:100,avg:120}, multiple:{avg:120} },
+  'R100': { single:{min:80}, grouped:{min:80}, multiple:{min:80} }
 };
 
 // SA zones have different minimum lot sizes
@@ -985,33 +1004,52 @@ function calcYield() {
   const system = document.getElementById('codeSystem').value;
   const totalArea = parseFloat(document.getElementById('totalArea').value) || 0;
   const frontage = parseFloat(document.getElementById('frontage').value) || 0;
-  const depth = parseFloat(document.getElementById('depth').value) || 0;
   const truncation = parseFloat(document.getElementById('truncation').value) || 0;
   const isCorner = document.getElementById('isCorner').checked;
   const isBattleaxe = document.getElementById('isBattleaxe').checked;
+  const dwType = (document.getElementById('dwType') || {value:'single'}).value;
 
-  let minLotSize = 400;
+  const effectiveArea = totalArea - truncation;
+
+  // Open space / road deductions only apply to larger development sites (>3000 m2);
+  // standard infill subdivision under R-Codes has no such deduction.
+  const isLargeSite = effectiveArea > 3000;
+  const openSpace = isLargeSite ? effectiveArea * 0.10 : 0;
+  const roadArea  = isLargeSite ? effectiveArea * 0.08 : 0;
+  const developableArea = effectiveArea - openSpace - roadArea;
+
+  let lotCount = 0, divisor = 0, entry = null, minTxt = '';
 
   if (system === 'wa') {
     const rCode = document.getElementById('rCode').value;
-    minLotSize = rCodeMinLots[rCode] || 400;
+    entry = (RCODE_TABLE[rCode] || RCODE_TABLE['R30'])[dwType] || RCODE_TABLE[rCode].single;
+    divisor = entry.avg || entry.min;           // Table D: yield governed by average site area (min where no av applies)
+    lotCount = Math.floor(developableArea / divisor);
+    // every lot must also meet the minimum site area
+    if (lotCount > 0 && (developableArea / lotCount) < entry.min) lotCount--;
+    // battleaxe: rear lot (incl. access leg) must meet the larger battleaxe minimum
+    if (isBattleaxe && entry.ba) {
+      while (lotCount >= 2 && developableArea < (lotCount - 1) * divisor + entry.ba) lotCount--;
+      if (lotCount === 1 && developableArea < entry.ba) lotCount = 0;
+    }
+    minTxt = entry.avg ? (entry.min + ' · ' + entry.avg + ' m²') : (entry.min + ' m² (no av)');
+    // frontage warning (single houses only)
+    const warnEl = document.getElementById('frontageWarn');
+    if (warnEl) {
+      if (entry.fr && frontage && frontage < entry.fr && !isCorner) {
+        warnEl.style.display = 'block';
+        warnEl.innerText = 'Frontage ' + frontage + 'm is below the ' + entry.fr + 'm minimum for this R-Code (single house). Corner lots may be exempt.';
+      } else { warnEl.style.display = 'none'; }
+    }
   } else {
     const saZone = document.getElementById('saZone').value;
-    minLotSize = saZoneMinLots[saZone] || 400;
+    divisor = saZoneMinLots[saZone] || 400;
+    lotCount = Math.floor(developableArea / divisor);
+    minTxt = divisor + ' m²';
   }
 
-  const effectiveArea = totalArea - truncation;
-  const openSpace = effectiveArea * 0.15;
-  const roadArea = effectiveArea * 0.08;
-  const developableArea = effectiveArea - openSpace - roadArea;
-
-  let lotCount = Math.floor(developableArea / minLotSize);
-  let avgPerLot = developableArea / (lotCount || 1);
-  let surplus = developableArea - (lotCount * minLotSize);
-
-  // Apply modifiers
-  if (isCorner) lotCount = Math.max(1, lotCount - 1);
-  if (isBattleaxe) lotCount = Math.max(1, lotCount - 1);
+  const avgPerLot = lotCount > 0 ? developableArea / lotCount : 0;
+  const surplus = Math.max(0, developableArea - lotCount * divisor);
 
   document.getElementById('lotCount').innerText = lotCount;
   document.getElementById('avgPerLot').innerText = Math.round(avgPerLot) + ' m²';
@@ -1020,14 +1058,10 @@ function calcYield() {
   document.getElementById('detailTotalArea').innerText = Math.round(totalArea) + ' m²';
   document.getElementById('detailOpenSpace').innerText = Math.round(openSpace) + ' m²';
   document.getElementById('detailRoadArea').innerText = Math.round(roadArea) + ' m²';
-  document.getElementById('detailMinLot').innerText = minLotSize + ' m²';
+  document.getElementById('detailMinLot').innerText = minTxt;
   document.getElementById('detailSurplus').innerText = Math.round(surplus) + ' m²';
 
-  // Store for export
-  window.lotYieldData = {
-    lotCount: lotCount,
-    area: effectiveArea
-  };
+  window.lotYieldData = { lotCount: lotCount, area: effectiveArea };
 }
 
 function exportToBudget() {
