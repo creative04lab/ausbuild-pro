@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0d1b3e">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d1b3e'/><text x='50' y='65' font-size='60' font-weight='bold' fill='%234a9eff' text-anchor='middle' font-family='Arial'>A</text></svg>" />
@@ -503,7 +503,7 @@ video {
     <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-gray-700">
       <p><strong>Version:</strong> 5.0 (Professional Enhanced)</p>
       <p><strong>Regions:</strong> Western Australia R-Codes 2024 + South Australia Planning Codes 2020</p>
-      <p><strong>Features:</strong> Lot Yield Calculation, Design Canvas, Budget Estimation</p>
+      <p><strong>Features:</strong>Lot Yield Calculation, Design Canvas, Budget Estimation</p>
     </div>
     <div class="space-y-2 text-xs text-gray-600 mb-4">
       <p>This application helps developers:</p>
@@ -528,12 +528,12 @@ video {
     Aus<span class="text-blue-300">Build</span> Pro <sup class="text-[9px] opacity-50">V5</sup>
   </div>
   <div class="flex gap-1" id="nav-tabs">
-    <button onclick="switchTab('calc')" data-tab="calc" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35">📐 Lot Yield</button>
-    <button onclick="switchTab('design')" data-tab="design" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">🎨 Design AI</button>
-    <button onclick="switchTab('quote')" data-tab="quote" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">💰 Budget Estimate</button>
+    <button onclick="switchTab('calc')" data-tab="calc" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all bg-white/20 text-white border-white/35">Lot Yield</button>
+    <button onclick="switchTab('design')" data-tab="design" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">Design AI</button>
+    <button onclick="switchTab('quote')" data-tab="quote" class="tab-btn px-5 py-2 rounded-full text-[13px] font-bold border border-white/15 transition-all text-white/70 hover:bg-white/10">Budget Estimate</button>
   </div>
   <div class="flex items-center gap-3">
-    <button onclick="saveToPDF()" class="px-3 py-1 text-xs bg-green-500 rounded-full hover:bg-green-600 transition">💾 Save as PDF</button>
+    <button onclick="saveToPDF()" class="px-3 py-1 text-xs bg-green-500 rounded-full hover:bg-green-600 transition">Save as PDF</button>
     <span class="text-[10px] opacity-50">V5 Enhanced | Multi-Region</span>
     <button onclick="openAboutModal()" class="px-3 py-1 text-xs bg-blue-500 rounded-full hover:bg-blue-600">Info</button>
   </div>
@@ -547,7 +547,7 @@ video {
   <div class="flex h-full">
     <!-- Left Panel -->
     <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
-      <h2 class="text-lg font-bold text-navy-900 mb-4">📐 Lot Yield Calculator</h2>
+      <h2 class="text-lg font-bold text-navy-900 mb-4">Lot Yield Calculator</h2>
       <p class="text-xs text-gray-500 mb-4">WA R-Codes & SA Planning Codes</p>
 
       <div class="space-y-3">
@@ -626,12 +626,12 @@ video {
         <div class="mt-3">
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="heritageOverlay" onchange="toggleHeritageWarning()"> Heritage Overlay</label>
           <div id="heritageWarning" class="warning-banner" style="display: none;">
-            ⚠️ Heritage Overlay may restrict lot division and dwelling design. Verify with local council.
+             Heritage Overlay may restrict lot division and dwelling design. Verify with local council.
           </div>
         </div>
 
         <button onclick="calcYield()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
-          ⚡ Calculate Yield
+           Calculate Yield
         </button>
 
         <!-- Export to Budget Button -->
@@ -708,14 +708,14 @@ video {
     <div class="flex-1 bg-white border-r overflow-hidden flex flex-col">
       <!-- Toolbar -->
       <div class="bg-white border-b flex items-center gap-2 px-4 py-3 flex-wrap">
-        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('pen')">✏️ Pen</button>
-        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('eraser')">🧹 Eraser</button>
-        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('rectangle')">▭ Rectangle</button>
-        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('circle')">⊙ Circle</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('pen')"> Pen</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('eraser')"> Eraser</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('rectangle')"> Rectangle</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('circle')"> Circle</button>
         <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('line')">/ Line</button>
 
         <!-- New Drawing Tools -->
-        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('label')">🏷️ Label</button>
+        <button class="draw-tool px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-semibold" onclick="setDrawMode('label')"> Label</button>
 
         <div class="border-l border-gray-300 mx-2 h-6"></div>
 
@@ -743,7 +743,7 @@ video {
           <label class="text-xs text-gray-600">Color:</label>
           <input type="color" value="#000000" id="penColor" class="w-8 h-8 rounded cursor-pointer" onchange="updatePenSettings()">
         </div>
-        <button class="view-btn px-3 py-2 bg-red-100 hover:bg-red-200 rounded text-sm font-semibold" onclick="clearCanvas()">🗑️ Clear</button>
+        <button class="view-btn px-3 py-2 bg-red-100 hover:bg-red-200 rounded text-sm font-semibold" onclick="clearCanvas()"> Clear</button>
       </div>
       <!-- Canvas -->
       <canvas id="canvas" class="flex-1 bg-white cursor-crosshair"></canvas>
@@ -751,17 +751,17 @@ video {
 
     <!-- Right Panel: AI Design Controls -->
     <div class="w-[420px] bg-white border-l overflow-y-auto p-5">
-      <h2 class="text-lg font-bold text-navy-900 mb-4">🎨 Design Assistant</h2>
+      <h2 class="text-lg font-bold text-navy-900 mb-4"> Design Assistant</h2>
       <div class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-2">Design Brief</label>
           <textarea id="aiPromptInput" class="w-full border rounded-lg px-3 py-2 text-sm resize-none" rows="6" placeholder="Describe your design intent here. Example: Modern residential townhouses with green spaces, parking underneath, 2-3 storeys, family-friendly layout..."></textarea>
         </div>
         <button id="generateBtn" onclick="generateAIDesign()" class="w-full bg-blue-500 text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition">
-          ✨ Generate Layout
+           Generate Layout
         </button>
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-gray-700">
-          <p class="font-semibold mb-1">💡 Tips for better designs:</p>
+          <p class="font-semibold mb-1"> Tips for better designs:</p>
           <ul class="list-disc ml-4 space-y-1">
             <li>Specify density (low, medium, high)</li>
             <li>Mention key features (parking, gardens, terraces)</li>
@@ -779,7 +779,7 @@ video {
   <div class="flex h-full">
     <!-- Left Panel: Inputs -->
     <div class="w-[420px] bg-white border-r overflow-y-auto p-5">
-      <h2 class="text-lg font-bold text-navy-900 mb-4">💰 Budget Estimate</h2>
+      <h2 class="text-lg font-bold text-navy-900 mb-4">Budget Estimate</h2>
       <p class="text-xs text-gray-500 mb-4">Adelaide-Specific Cost Benchmarks</p>
 
       <div class="space-y-3">
@@ -836,7 +836,7 @@ video {
         </div>
 
         <button onclick="updateBudget()" class="w-full mt-4 bg-navy-900 text-white py-3 rounded-lg font-bold hover:bg-navy-800 transition">
-          🧮 Calculate Budget
+           Calculate Budget
         </button>
       </div>
     </div>
@@ -1232,5 +1232,40 @@ window.addEventListener('load', () => {
   updateBudget();
 });
 </script>
+
+<style id="arch-theme">
+:root{--ink:#1c1b19;--ink2:#6f6a60;--paper:#faf9f6;--line:#e2ded5;--accent:#b4552d;}
+body{font-family:'Inter',-apple-system,sans-serif!important;background:var(--paper)!important;color:var(--ink)!important;letter-spacing:.01em;}
+h1,h2,h3,.font-extrabold.tracking-wide{font-family:'Cormorant Garamond',Georgia,serif!important;font-weight:600!important;letter-spacing:.02em;}
+nav.gradient-bg{background:var(--paper)!important;color:var(--ink)!important;border-bottom:1px solid var(--line);height:3.5rem!important;}
+nav.gradient-bg .text-blue-300{color:var(--accent)!important;}
+nav.gradient-bg sup,nav .opacity-50{color:var(--ink2)!important;opacity:1!important;}
+nav.gradient-bg>div:first-child{font-family:'Cormorant Garamond',Georgia,serif!important;font-size:1.35rem!important;font-weight:600!important;color:var(--ink)!important;}
+.tab-btn{border-radius:0!important;background:transparent!important;border:none!important;border-bottom:2px solid transparent!important;color:var(--ink2)!important;text-transform:uppercase;letter-spacing:.12em;font-size:11px!important;font-weight:500!important;padding:.6rem 1rem!important;}
+.tab-btn:hover{color:var(--ink)!important;background:transparent!important;}
+.tab-btn.bg-white\/20{color:var(--ink)!important;border-bottom-color:var(--accent)!important;font-weight:600!important;}
+button{border-radius:0!important;}
+.bg-green-500,.bg-blue-500,.bg-blue-600,.bg-indigo-600{background:var(--ink)!important;color:#fff!important;}
+.bg-green-500:hover,.bg-blue-500:hover,.bg-blue-600:hover,.bg-indigo-600:hover{background:#000!important;}
+nav button.bg-green-500,nav button.bg-blue-500{background:transparent!important;color:var(--ink)!important;border:1px solid var(--ink)!important;padding:.35rem .9rem!important;text-transform:uppercase;letter-spacing:.1em;font-size:10px!important;}
+nav button.bg-green-500:hover,nav button.bg-blue-500:hover{background:var(--ink)!important;color:#fff!important;}
+input,select,textarea{background:#fff!important;border:1px solid var(--line)!important;border-radius:0!important;color:var(--ink)!important;}
+input:focus,select:focus,textarea:focus{border-color:var(--ink)!important;outline:none!important;box-shadow:none!important;}
+.bg-white,.bg-gray-50,.bg-gray-100,.bg-blue-50,.bg-green-50,.bg-yellow-50{border-radius:0!important;}
+.rounded,.rounded-lg,.rounded-xl,.rounded-2xl,.rounded-md{border-radius:0!important;}
+.shadow,.shadow-sm,.shadow-md,.shadow-lg,.shadow-xl{box-shadow:none!important;border:1px solid var(--line)!important;}
+.text-blue-600,.text-indigo-600{color:var(--accent)!important;}
+.text-green-600,.text-emerald-600{color:var(--ink)!important;}
+.bg-blue-50{background:#f4f1ea!important;}
+.bg-green-50{background:#fff!important;}
+.warning-banner{background:#f6f1e7!important;border-left:2px solid var(--accent)!important;color:var(--ink2)!important;border-radius:0!important;}
+.gradient-bg button.bg-white\/20{background:transparent!important;}
+.draw-tool{background:#fff!important;border:1px solid var(--line)!important;font-size:11px!important;text-transform:uppercase;letter-spacing:.06em;}
+.draw-tool:hover{border-color:var(--ink)!important;background:#fff!important;}
+.text-navy-900{color:var(--ink)!important;}
+button[onclick*="calculate"],button[onclick*="Calculate"],#generateBtn{background:var(--ink)!important;color:#fff!important;letter-spacing:.14em;text-transform:uppercase;font-size:12px!important;font-weight:500!important;}
+.cost-row:hover{background:#f4f1ea!important;}
+::selection{background:var(--accent);color:#fff;}
+</style>
 </body>
 </html>
