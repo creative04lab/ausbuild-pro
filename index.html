@@ -631,9 +631,9 @@ video {
             <label class="block text-xs font-semibold text-gray-600 mb-1">Concession (C1.1.5–1.1.8)</label>
             <select class="w-full border rounded-lg px-3 py-2 text-sm" id="concession" onchange="calcYield()">
               <option value="none" selected>None</option>
-              <option value="aged">Aged/dependent or 1-bed (R25↓, −⅓)</option>
-              <option value="gold">Accessible gold / small dwelling (−35%)</option>
-              <option value="tree">Significant tree retained (multiple R30–60, avg −10%)</option>
+              <option value="aged">Aged / 1-bed (R25↓ −⅓)</option>
+              <option value="gold">Gold / small dwelling (−35%)</option>
+              <option value="tree">Tree retained (av −10%)</option>
             </select>
           </div>
         </div>
@@ -1396,6 +1396,7 @@ table td{border-bottom:1px solid var(--line)!important;}
 canvas{background:#fff;}
 ::selection{background:var(--accent);color:#fff;}
 ::placeholder{color:#b8b2a2!important;}
+.grid>div{min-width:0;}select{max-width:100%;min-width:0;}
 /* final fixes */
 .tab-btn{border-top:none!important;border-left:none!important;border-right:none!important;}
 .bg-navy-900,button[onclick*="calcYield"],button[onclick*="updateBudget"]{background:var(--ink)!important;color:var(--paper)!important;letter-spacing:.22em!important;text-transform:uppercase!important;font-size:10.5px!important;font-weight:500!important;padding:1.15rem 2rem!important;transition:background .3s!important;}
