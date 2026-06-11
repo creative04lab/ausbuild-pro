@@ -618,8 +618,23 @@ video {
             <input type="number" value="42.5" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="depth" onchange="calcYield()">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Truncation (m²)</label>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Corner Truncation (m²)</label>
             <input type="number" value="0" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="truncation" onchange="calcYield()">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mt-2">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Battleaxe Access Leg (m²)</label>
+            <input type="number" value="0" min="0" autocomplete="off" class="w-full border rounded-lg px-3 py-2 text-sm" id="baLeg" onchange="calcYield()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Concession (C1.1.5–1.1.8)</label>
+            <select class="w-full border rounded-lg px-3 py-2 text-sm" id="concession" onchange="calcYield()">
+              <option value="none" selected>None</option>
+              <option value="aged">Aged/dependent or 1-bed (R25↓, −⅓)</option>
+              <option value="gold">Accessible gold / small dwelling (−35%)</option>
+              <option value="tree">Significant tree retained (multiple R30–60, avg −10%)</option>
+            </select>
           </div>
         </div>
         <div class="flex items-center gap-3 mt-2">
@@ -1005,61 +1020,110 @@ function calcYield() {
   const totalArea = parseFloat(document.getElementById('totalArea').value) || 0;
   const frontage = parseFloat(document.getElementById('frontage').value) || 0;
   const truncation = parseFloat(document.getElementById('truncation').value) || 0;
+  const baLeg = parseFloat((document.getElementById('baLeg')||{}).value) || 0;
+  const concession = (document.getElementById('concession')||{value:'none'}).value;
   const isCorner = document.getElementById('isCorner').checked;
   const isBattleaxe = document.getElementById('isBattleaxe').checked;
   const dwType = (document.getElementById('dwType') || {value:'single'}).value;
 
-  const effectiveArea = totalArea - truncation;
+  // C1.1.3(i): corner truncation - up to 20 m2 added back to the lot area
+  const truncCredit = (isCorner && truncation > 0) ? Math.min(truncation, 20) : 0;
+  const effectiveArea = totalArea + truncCredit;
 
-  // Open space / road deductions only apply to larger development sites (>3000 m2);
-  // standard infill subdivision under R-Codes has no such deduction.
+  // open space / road deductions only for larger development sites (>3000 m2)
   const isLargeSite = effectiveArea > 3000;
   const openSpace = isLargeSite ? effectiveArea * 0.10 : 0;
   const roadArea  = isLargeSite ? effectiveArea * 0.08 : 0;
   const developableArea = effectiveArea - openSpace - roadArea;
 
-  let lotCount = 0, divisor = 0, entry = null, minTxt = '';
+  let lotCount = 0, entry = null, minTxt = '', notes = [], reqPerLot = 0;
 
   if (system === 'wa') {
     const rCode = document.getElementById('rCode').value;
+    const codeNum = parseFloat(rCode.replace('R','')) || 0;
     entry = (RCODE_TABLE[rCode] || RCODE_TABLE['R30'])[dwType] || RCODE_TABLE[rCode].single;
-    divisor = entry.avg || entry.min;           // Table D: yield governed by average site area (min where no av applies)
-    lotCount = Math.floor(developableArea / divisor);
-    // every lot must also meet the minimum site area
-    if (lotCount > 0 && (developableArea / lotCount) < entry.min) lotCount--;
-    // battleaxe: rear lot (incl. access leg) must meet the larger battleaxe minimum
-    if (isBattleaxe && entry.ba) {
-      while (lotCount >= 2 && developableArea < (lotCount - 1) * divisor + entry.ba) lotCount--;
-      if (lotCount === 1 && developableArea < entry.ba) lotCount = 0;
+    let minA = entry.min, avgA = entry.avg || entry.min;
+    let minRed = minA, avgRed = avgA, blend50 = false;
+
+    // C1.1.5 / C1.1.6 / C1.1.7 / C1.1.8 site-area variations
+    if (concession === 'aged' && codeNum <= 25) {
+      minRed = minA * 2/3; avgRed = avgA * 2/3;
+      notes.push('C1.1.5: aged/dependent or single-bed dwelling, min & av reduced by 1/3');
+    } else if (concession === 'gold' && codeNum >= 30) {
+      minRed = Math.max(minA * 0.65, 100); avgRed = Math.max(avgA * 0.65, 100);
+      blend50 = true;  // C1.1.6/7: for 4+ dwellings, max 50% of sites may use the reduction
+      notes.push('C1.1.6/7: accessible (gold) or small dwelling, min & av reduced by 35% (no site < 100 m2)');
+    } else if (concession === 'tree' && dwType === 'multiple' && codeNum >= 30 && codeNum <= 60) {
+      avgRed = avgA * 0.9;
+      notes.push('C1.1.8: significant tree retained, average site area reduced by 10%');
+    } else if (concession !== 'none') {
+      notes.push('Selected concession does not apply to this R-Code / dwelling type - ignored');
     }
-    minTxt = entry.avg ? (entry.min + ' · ' + entry.avg + ' m²') : (entry.min + ' m² (no av)');
-    // frontage warning (single houses only)
+
+    // yield: max n such that required land <= developable area
+    // C1.1.6/7 cap: when n >= 4, at most floor(n/2) sites at reduced area
+    const need = function(n) {
+      if (!blend50 || n < 4) return n * avgRed;
+      const r = Math.floor(n / 2);
+      return r * avgRed + (n - r) * avgA;
+    };
+    lotCount = 0;
+    for (let n = 1; n <= Math.floor(developableArea / Math.min(avgRed, avgA)) + 1; n++) {
+      if (need(n) <= developableArea) lotCount = n; else break;
+    }
+    // every site must still meet the (reduced) minimum
+    if (lotCount > 0 && (developableArea / lotCount) < minRed) lotCount--;
+    reqPerLot = lotCount > 0 ? need(lotCount) / lotCount : avgRed;
+
+    // C1.1.3(ii)/(iv): battleaxe rear lot
+    if (isBattleaxe && entry.ba) {
+      let rearNeed;
+      if (codeNum <= 40) {
+        // leg counts toward site area, but only up to 20% of the required area
+        const legExcess = Math.max(0, baLeg - 0.2 * entry.ba);
+        rearNeed = entry.ba + legExcess;
+        if (baLeg > 0) notes.push('C1.1.3(ii): access leg counted up to 20% of required site area (' + Math.round(0.2*entry.ba) + ' m2)');
+      } else {
+        // R50+: leg fully excluded from site area
+        rearNeed = entry.ba + baLeg;
+        if (baLeg > 0) notes.push('C1.1.3(iv): R50+, access leg excluded from site area');
+      }
+      while (lotCount >= 2 && developableArea < need(lotCount - 1) + rearNeed) lotCount--;
+      if (lotCount === 1 && developableArea < rearNeed) lotCount = 0;
+    }
+
+    if (truncCredit > 0) notes.push('C1.1.3(i): ' + truncCredit + ' m2 corner truncation added to site area');
+    minTxt = entry.avg ? (Math.round(minRed) + ' · ' + Math.round(avgRed) + ' m²') : (Math.round(minRed) + ' m² (no av)');
+
     const warnEl = document.getElementById('frontageWarn');
     if (warnEl) {
+      const msgs = [];
       if (entry.fr && frontage && frontage < entry.fr && !isCorner) {
-        warnEl.style.display = 'block';
-        warnEl.innerText = 'Frontage ' + frontage + 'm is below the ' + entry.fr + 'm minimum for this R-Code (single house). Corner lots may be exempt.';
-      } else { warnEl.style.display = 'none'; }
+        msgs.push('Frontage ' + frontage + 'm is below the ' + entry.fr + 'm minimum for this R-Code (single house). Corner lots may be exempt.');
+      }
+      if (notes.length) msgs.push(notes.join(' • '));
+      warnEl.style.display = msgs.length ? 'block' : 'none';
+      warnEl.innerText = msgs.join('  |  ');
     }
   } else {
     const saZone = document.getElementById('saZone').value;
-    divisor = saZoneMinLots[saZone] || 400;
+    const divisor = saZoneMinLots[saZone] || 400;
     lotCount = Math.floor(developableArea / divisor);
     minTxt = divisor + ' m²';
+    reqPerLot = divisor;
   }
 
   const avgPerLot = lotCount > 0 ? developableArea / lotCount : 0;
-  const surplus = Math.max(0, developableArea - lotCount * divisor);
 
   document.getElementById('lotCount').innerText = lotCount;
   document.getElementById('avgPerLot').innerText = Math.round(avgPerLot) + ' m²';
   document.getElementById('effectiveArea').innerText = Math.round(effectiveArea) + ' m²';
 
-  document.getElementById('detailTotalArea').innerText = Math.round(totalArea) + ' m²';
+  document.getElementById('detailTotalArea').innerText = Math.round(totalArea) + (truncCredit ? ' + ' + truncCredit + ' m²' : ' m²');
   document.getElementById('detailOpenSpace').innerText = Math.round(openSpace) + ' m²';
   document.getElementById('detailRoadArea').innerText = Math.round(roadArea) + ' m²';
   document.getElementById('detailMinLot').innerText = minTxt;
-  document.getElementById('detailSurplus').innerText = Math.round(surplus) + ' m²';
+  document.getElementById('detailSurplus').innerText = Math.round(Math.max(0, developableArea - lotCount * reqPerLot)) + ' m²';
 
   window.lotYieldData = { lotCount: lotCount, area: effectiveArea };
 }
